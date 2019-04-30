@@ -16,50 +16,49 @@
 
 package com.baidu.brpc.protocol;
 
-import java.util.Map;
-
 import com.baidu.brpc.RpcMethodInfo;
 import com.baidu.brpc.client.RpcFuture;
 import com.baidu.brpc.protocol.nshead.NSHead;
-
 import io.netty.buffer.ByteBuf;
+import java.util.Map;
 
 public interface Response {
-    Object getResult();
 
-    void setResult(Object result);
+  Object getResult();
 
-    long getLogId();
+  void setResult(Object result);
 
-    void setLogId(long logId);
+  long getLogId();
 
-    Throwable getException();
+  void setLogId(long logId);
 
-    NSHead getNsHead();
+  Throwable getException();
 
-    void setNsHead(NSHead nsHead);
+  void setException(Throwable exception);
 
-    void setException(Throwable exception);
+  NSHead getNsHead();
 
-    RpcMethodInfo getRpcMethodInfo();
+  void setNsHead(NSHead nsHead);
 
-    void setRpcMethodInfo(RpcMethodInfo rpcMethodInfo);
+  RpcMethodInfo getRpcMethodInfo();
 
-    RpcFuture getRpcFuture();
+  void setRpcMethodInfo(RpcMethodInfo rpcMethodInfo);
 
-    void setRpcFuture(RpcFuture rpcFuture);
+  RpcFuture getRpcFuture();
 
-    Map<String, String> getKvAttachment();
+  void setRpcFuture(RpcFuture rpcFuture);
 
-    void setKvAttachment(Map<String, String> kvAttachment);
+  Map<String, String> getKvAttachment();
 
-    ByteBuf getBinaryAttachment();
+  void setKvAttachment(Map<String, String> kvAttachment);
 
-    void setBinaryAttachment(ByteBuf binaryAttachment);
+  ByteBuf getBinaryAttachment();
 
-    int getCompressType();
+  void setBinaryAttachment(ByteBuf binaryAttachment);
 
-    void setCompressType(int compressType);
+  int getCompressType();
 
-    void reset();
+  void setCompressType(int compressType);
+
+  void reset();
 }

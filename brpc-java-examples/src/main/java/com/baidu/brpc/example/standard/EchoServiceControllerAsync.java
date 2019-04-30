@@ -18,14 +18,14 @@ package com.baidu.brpc.example.standard;
 
 import com.baidu.brpc.Controller;
 import com.baidu.brpc.client.RpcCallback;
-
 import java.util.concurrent.Future;
 
 /**
  * Created by baidu on 2017/9/23.
  */
 public interface EchoServiceControllerAsync extends EchoServiceController {
-    Future<Echo.EchoResponse> echo(Controller controller,
-                                   Echo.EchoRequest request,
-                                   RpcCallback<Echo.EchoResponse> callback);
+
+  Future<Echo.EchoResponse> echo(Controller controller,
+      Echo.EchoRequest request,
+      RpcCallback<Echo.EchoResponse> callback);
 }

@@ -17,36 +17,37 @@
 package com.baidu.brpc.utils;
 
 import com.baidu.brpc.protocol.BrpcMeta;
+import java.lang.reflect.Method;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
-import java.lang.reflect.Method;
-
 @Slf4j
 public class RpcMetaUtils {
-    @Setter
-    @Getter
-    public static class RpcMetaInfo {
-        private String serviceName;
-        private String methodName;
-    }
 
-    public static RpcMetaInfo parseRpcMeta(Method targetMethod) {
-        String serviceName;
-        String methodName;
-        BrpcMeta rpcMeta = targetMethod.getAnnotation(BrpcMeta.class);
-        if (rpcMeta != null) {
-            serviceName = rpcMeta.serviceName();
-            methodName = rpcMeta.methodName();
-        } else {
-            serviceName = targetMethod.getDeclaringClass().getName();
-            methodName = targetMethod.getName();
-        }
-        log.debug("serviceName={}, methodName={}", serviceName, methodName);
-        RpcMetaInfo rpcMetaInfo = new RpcMetaInfo();
-        rpcMetaInfo.setServiceName(serviceName);
-        rpcMetaInfo.setMethodName(methodName);
-        return rpcMetaInfo;
+  public static RpcMetaInfo parseRpcMeta(Method targetMethod) {
+    String serviceName;
+    String methodName;
+    BrpcMeta rpcMeta = targetMethod.getAnnotation(BrpcMeta.class);
+    if (rpcMeta != null) {
+      serviceName = rpcMeta.serviceName();
+      methodName = rpcMeta.methodName();
+    } else {
+      serviceName = targetMethod.getDeclaringClass().getName();
+      methodName = targetMethod.getName();
     }
+    log.debug("serviceName={}, methodName={}", serviceName, methodName);
+    RpcMetaInfo rpcMetaInfo = new RpcMetaInfo();
+    rpcMetaInfo.setServiceName(serviceName);
+    rpcMetaInfo.setMethodName(methodName);
+    return rpcMetaInfo;
+  }
+
+  @Setter
+  @Getter
+  public static class RpcMetaInfo {
+
+    private String serviceName;
+    private String methodName;
+  }
 }

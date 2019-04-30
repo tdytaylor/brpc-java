@@ -25,33 +25,32 @@ import com.baidu.brpc.utils.ThreadPool;
  */
 public class BrpcWorkThreadPoolInstance {
 
-    private static volatile ThreadPool workThreadPool;
+  private static volatile ThreadPool workThreadPool;
 
-    private BrpcWorkThreadPoolInstance() {
+  private BrpcWorkThreadPoolInstance() {
 
-    }
+  }
 
-    /**
-     * threadNum only works when thread pool instance create in the first time
-     */
-    public static ThreadPool getOrCreateInstance(int threadNum) {
+  /**
+   * threadNum only works when thread pool instance create in the first time
+   */
+  public static ThreadPool getOrCreateInstance(int threadNum) {
 
+    if (workThreadPool == null) {
+      synchronized (BrpcWorkThreadPoolInstance.class) {
         if (workThreadPool == null) {
-            synchronized (BrpcWorkThreadPoolInstance.class) {
-                if (workThreadPool == null) {
-                    workThreadPool = new ThreadPool(threadNum,
-                            new CustomThreadFactory("brpc-work-thread"));
-                }
-            }
+          workThreadPool = new ThreadPool(threadNum,
+              new CustomThreadFactory("brpc-work-thread"));
         }
-
-        return workThreadPool;
+      }
     }
+    return workThreadPool;
+  }
 
-    public static ThreadPool getInstance() {
-        return workThreadPool;
+  public static ThreadPool getInstance() {
+    return workThreadPool;
 
-    }
+  }
 
 
 }

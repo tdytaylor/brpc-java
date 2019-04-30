@@ -16,61 +16,58 @@
 
 package com.baidu.brpc.client.pool;
 
+import com.baidu.brpc.ChannelInfo;
+import com.baidu.brpc.client.channel.BrpcChannel;
+import io.netty.channel.Channel;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.pool2.BasePooledObjectFactory;
 import org.apache.commons.pool2.PooledObject;
 import org.apache.commons.pool2.impl.DefaultPooledObject;
 
-import com.baidu.brpc.ChannelInfo;
-import com.baidu.brpc.client.channel.BrpcChannel;
-
-import io.netty.channel.Channel;
-import lombok.extern.slf4j.Slf4j;
-
 /**
- * Channel pool for the rpc client.
- * Base on apache.commons.pool.
+ * Channel pool for the rpc client. Base on apache.commons.pool.
  */
 @Slf4j
 public class ChannelPooledObjectFactory extends BasePooledObjectFactory<Channel> {
 
-    private BrpcChannel channelGroup;
+  private BrpcChannel channelGroup;
 
-    private String ip;
+  private String ip;
 
-    private int port;
+  private int port;
 
-    public ChannelPooledObjectFactory(BrpcChannel channelGroup, String ip, int port) {
-        this.channelGroup = channelGroup;
-        this.ip = ip;
-        this.port = port;
+  public ChannelPooledObjectFactory(BrpcChannel channelGroup, String ip, int port) {
+    this.channelGroup = channelGroup;
+    this.ip = ip;
+    this.port = port;
+  }
+
+  @Override
+  public Channel create() throws Exception {
+    Channel channel = channelGroup.connect(ip, port);
+    ChannelInfo channelInfo = ChannelInfo.getOrCreateClientChannelInfo(channel);
+    channelInfo.setChannelGroup(channelGroup);
+    channelInfo.setProtocol(channelGroup.getProtocol());
+    return channel;
+  }
+
+  @Override
+  public PooledObject<Channel> wrap(Channel obj) {
+    return new DefaultPooledObject<Channel>(obj);
+  }
+
+  @Override
+  public void destroyObject(PooledObject<Channel> p) throws Exception {
+    Channel channel = p.getObject();
+    if (channel != null && channel.isOpen() && channel.isActive()) {
+      channel.close();
     }
+    channel = null;
+  }
 
-    @Override
-    public Channel create() throws Exception {
-        Channel channel = channelGroup.connect(ip, port);
-        ChannelInfo channelInfo = ChannelInfo.getOrCreateClientChannelInfo(channel);
-        channelInfo.setChannelGroup(channelGroup);
-        channelInfo.setProtocol(channelGroup.getProtocol());
-        return channel;
-    }
-
-    @Override
-    public PooledObject<Channel> wrap(Channel obj) {
-        return new DefaultPooledObject<Channel>(obj);
-    }
-
-    @Override
-    public void destroyObject(PooledObject<Channel> p) throws Exception {
-        Channel channel = p.getObject();
-        if (channel != null && channel.isOpen() && channel.isActive()) {
-            channel.close();
-        }
-        channel = null;
-    }
-
-    public boolean validateObject(PooledObject<Channel> p) {
-        Channel channel = p.getObject();
-        return channel != null && channel.isOpen() && channel.isActive();
-    }
+  public boolean validateObject(PooledObject<Channel> p) {
+    Channel channel = p.getObject();
+    return channel != null && channel.isOpen() && channel.isActive();
+  }
 
 }

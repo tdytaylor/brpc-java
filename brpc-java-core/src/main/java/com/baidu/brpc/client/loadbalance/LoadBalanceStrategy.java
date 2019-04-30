@@ -16,24 +16,24 @@
 
 package com.baidu.brpc.client.loadbalance;
 
-import java.util.concurrent.CopyOnWriteArrayList;
-
 import com.baidu.brpc.client.RpcClient;
 import com.baidu.brpc.client.channel.BrpcChannel;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * load balance strategy interface
  */
 public interface LoadBalanceStrategy {
-    // default supported load balance type
-    int LOAD_BALANCE_RANDOM = 0;
-    int LOAD_BALANCE_ROUND_ROBIN = 1;
-    int LOAD_BALANCE_WEIGHT = 2;
-    int LOAD_BALANCE_FAIR = 3;
 
-    void init(RpcClient rpcClient);
+  // default supported load balance type
+  int LOAD_BALANCE_RANDOM = 0;
+  int LOAD_BALANCE_ROUND_ROBIN = 1;
+  int LOAD_BALANCE_WEIGHT = 2;
+  int LOAD_BALANCE_FAIR = 3;
 
-    BrpcChannel selectInstance(CopyOnWriteArrayList<BrpcChannel> instances);
+  void init(RpcClient rpcClient);
 
-    void destroy();
+  BrpcChannel selectInstance(CopyOnWriteArrayList<BrpcChannel> instances);
+
+  void destroy();
 }

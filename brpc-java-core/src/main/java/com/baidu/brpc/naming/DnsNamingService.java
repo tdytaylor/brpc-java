@@ -22,98 +22,99 @@ import io.netty.util.HashedWheelTimer;
 import io.netty.util.Timeout;
 import io.netty.util.Timer;
 import io.netty.util.TimerTask;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.Validate;
-
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.Validate;
 
 public class DnsNamingService implements NamingService {
-    private BrpcURL namingUrl;
-    private String host;
-    private int port;
-    private String hostPort;
-    private List<Endpoint> lastEndPoints = new ArrayList<Endpoint>();
-    private Timer namingServiceTimer;
-    private int updateInterval;
 
-    public DnsNamingService(BrpcURL namingUrl) {
-        Validate.notNull(namingUrl);
-        Validate.notEmpty(namingUrl.getHostPorts());
-        this.namingUrl = namingUrl;
+  private BrpcURL namingUrl;
+  private String host;
+  private int port;
+  private String hostPort;
+  private List<Endpoint> lastEndPoints = new ArrayList<Endpoint>();
+  private Timer namingServiceTimer;
+  private int updateInterval;
 
-        String[] splits = namingUrl.getHostPorts().split(":");
-        this.host = splits[0];
-        if (splits.length == 2) {
-            this.port = Integer.valueOf(splits[1]);
-        } else {
-            this.port = 80;
-        }
-        this.hostPort = this.host + ":" + this.port;
-        this.updateInterval = namingUrl.getIntParameter(
-                Constants.INTERVAL, Constants.DEFAULT_INTERVAL);
-        namingServiceTimer = new HashedWheelTimer(new CustomThreadFactory("namingService-timer-thread"));
+  public DnsNamingService(BrpcURL namingUrl) {
+    Validate.notNull(namingUrl);
+    Validate.notEmpty(namingUrl.getHostPorts());
+    this.namingUrl = namingUrl;
+
+    String[] splits = namingUrl.getHostPorts().split(":");
+    this.host = splits[0];
+    if (splits.length == 2) {
+      this.port = Integer.valueOf(splits[1]);
+    } else {
+      this.port = 80;
+    }
+    this.hostPort = this.host + ":" + this.port;
+    this.updateInterval = namingUrl.getIntParameter(
+        Constants.INTERVAL, Constants.DEFAULT_INTERVAL);
+    namingServiceTimer = new HashedWheelTimer(
+        new CustomThreadFactory("namingService-timer-thread"));
+  }
+
+  @Override
+  public List<Endpoint> lookup(SubscribeInfo subscribeInfo) {
+    InetAddress[] addresses;
+    try {
+      addresses = InetAddress.getAllByName(host);
+    } catch (UnknownHostException ex) {
+      throw new IllegalArgumentException("unknown http host");
     }
 
-    @Override
-    public List<Endpoint> lookup(SubscribeInfo subscribeInfo) {
-        InetAddress[] addresses;
-        try {
-            addresses = InetAddress.getAllByName(host);
-        } catch (UnknownHostException ex) {
-            throw new IllegalArgumentException("unknown http host");
-        }
-
-        List<Endpoint> endPoints = new ArrayList<Endpoint>();
-        for (InetAddress address : addresses) {
-            Endpoint endPoint = new Endpoint(address.getHostAddress(), port);
-            endPoints.add(endPoint);
-        }
-        return endPoints;
+    List<Endpoint> endPoints = new ArrayList<Endpoint>();
+    for (InetAddress address : addresses) {
+      Endpoint endPoint = new Endpoint(address.getHostAddress(), port);
+      endPoints.add(endPoint);
     }
+    return endPoints;
+  }
 
-    @Override
-    public void subscribe(SubscribeInfo subscribeInfo, final NotifyListener listener) {
-        namingServiceTimer.newTimeout(
-                new TimerTask() {
-                    @Override
-                    public void run(Timeout timeout) throws Exception {
-                        try {
-                            List<Endpoint> currentEndPoints = lookup(null);
-                            Collection<Endpoint> addList = CollectionUtils.subtract(
-                                    currentEndPoints, lastEndPoints);
-                            Collection<Endpoint> deleteList = CollectionUtils.subtract(
-                                    lastEndPoints, currentEndPoints);
-                            listener.notify(addList, deleteList);
-                            lastEndPoints = currentEndPoints;
-                        } catch (Exception ex) {
-                            // ignore exception
-                        }
-                        namingServiceTimer.newTimeout(this, updateInterval, TimeUnit.MILLISECONDS);
+  @Override
+  public void subscribe(SubscribeInfo subscribeInfo, final NotifyListener listener) {
+    namingServiceTimer.newTimeout(
+        new TimerTask() {
+          @Override
+          public void run(Timeout timeout) throws Exception {
+            try {
+              List<Endpoint> currentEndPoints = lookup(null);
+              Collection<Endpoint> addList = CollectionUtils.subtract(
+                  currentEndPoints, lastEndPoints);
+              Collection<Endpoint> deleteList = CollectionUtils.subtract(
+                  lastEndPoints, currentEndPoints);
+              listener.notify(addList, deleteList);
+              lastEndPoints = currentEndPoints;
+            } catch (Exception ex) {
+              // ignore exception
+            }
+            namingServiceTimer.newTimeout(this, updateInterval, TimeUnit.MILLISECONDS);
 
-                    }
-                },
-                updateInterval, TimeUnit.MILLISECONDS);
-    }
+          }
+        },
+        updateInterval, TimeUnit.MILLISECONDS);
+  }
 
-    @Override
-    public void unsubscribe(SubscribeInfo subscribeInfo) {
-        namingServiceTimer.stop();
-    }
+  @Override
+  public void unsubscribe(SubscribeInfo subscribeInfo) {
+    namingServiceTimer.stop();
+  }
 
-    @Override
-    public void register(RegisterInfo registerInfo) {
-    }
+  @Override
+  public void register(RegisterInfo registerInfo) {
+  }
 
-    @Override
-    public void unregister(RegisterInfo registerInfo) {
-    }
+  @Override
+  public void unregister(RegisterInfo registerInfo) {
+  }
 
-    public String getHostPort() {
-        return hostPort;
-    }
+  public String getHostPort() {
+    return hostPort;
+  }
 }

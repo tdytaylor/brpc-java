@@ -16,45 +16,44 @@
 
 package com.baidu.brpc.client.loadbalance;
 
-import java.util.Random;
-import java.util.concurrent.CopyOnWriteArrayList;
-
 import com.baidu.brpc.client.RpcClient;
 import com.baidu.brpc.client.channel.BrpcChannel;
+import java.util.Random;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Simple random select load balance strategy implementation
  */
 public class RandomStrategy implements LoadBalanceStrategy {
 
-    private final Random random = new Random();
+  private final Random random = new Random();
 
-    @Override
-    public void init(RpcClient rpcClient) {
+  @Override
+  public void init(RpcClient rpcClient) {
 
+  }
+
+  @Override
+  public BrpcChannel selectInstance(CopyOnWriteArrayList<BrpcChannel> instances) {
+    long instanceNum = instances.size();
+    if (instanceNum == 0) {
+      return null;
     }
 
-    @Override
-    public BrpcChannel selectInstance(CopyOnWriteArrayList<BrpcChannel> instances) {
-        long instanceNum = instances.size();
-        if (instanceNum == 0) {
-            return null;
-        }
+    int index = (int) (getRandomLong() % instanceNum);
+    BrpcChannel brpcChannel = instances.get(index);
+    return brpcChannel;
+  }
 
-        int index = (int) (getRandomLong() % instanceNum);
-        BrpcChannel brpcChannel = instances.get(index);
-        return brpcChannel;
-    }
+  @Override
+  public void destroy() {
+  }
 
-    @Override
-    public void destroy() {
+  private long getRandomLong() {
+    long randomIndex = random.nextLong();
+    if (randomIndex < 0) {
+      randomIndex = 0 - randomIndex;
     }
-
-    private long getRandomLong() {
-        long randomIndex = random.nextLong();
-        if (randomIndex < 0) {
-            randomIndex = 0 - randomIndex;
-        }
-        return randomIndex;
-    }
+    return randomIndex;
+  }
 }

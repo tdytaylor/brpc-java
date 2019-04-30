@@ -26,30 +26,31 @@ import org.slf4j.LoggerFactory;
  * Created by huwenwei@baidu.com on 2019/4/8.
  */
 public class EchoServiceControllerImpl implements EchoServiceController {
-    private static final Logger LOG = LoggerFactory.getLogger(EchoServiceControllerImpl.class);
 
-    @Override
-    public Echo.EchoResponse echo(Controller controller, Echo.EchoRequest request) {
-        // 读取request attachment
-        String remoteHost = controller.getRemoteHost();
-        LOG.debug("remote host:{}", remoteHost);
-        ByteBuf attachment = controller.getRequestBinaryAttachment();
-        if (attachment != null) {
-            if (LOG.isDebugEnabled()) {
-                String attachmentString = new String(attachment.array());
-                LOG.debug("request attachment={}", attachmentString);
-            }
-            // 设置response attachment
-            controller.setResponseBinaryAttachment(Unpooled.copiedBuffer(attachment));
-            attachment.release();
-        }
+  private static final Logger LOG = LoggerFactory.getLogger(EchoServiceControllerImpl.class);
 
-        String message = request.getMessage();
-        Echo.EchoResponse response = Echo.EchoResponse.newBuilder()
-                .setMessage(message).build();
-        LOG.debug("EchoService.echo, request={}, response={}",
-                request.getMessage(), response.getMessage());
-
-        return response;
+  @Override
+  public Echo.EchoResponse echo(Controller controller, Echo.EchoRequest request) {
+    // 读取request attachment
+    String remoteHost = controller.getRemoteHost();
+    LOG.debug("remote host:{}", remoteHost);
+    ByteBuf attachment = controller.getRequestBinaryAttachment();
+    if (attachment != null) {
+      if (LOG.isDebugEnabled()) {
+        String attachmentString = new String(attachment.array());
+        LOG.debug("request attachment={}", attachmentString);
+      }
+      // 设置response attachment
+      controller.setResponseBinaryAttachment(Unpooled.copiedBuffer(attachment));
+      attachment.release();
     }
+
+    String message = request.getMessage();
+    Echo.EchoResponse response = Echo.EchoResponse.newBuilder()
+        .setMessage(message).build();
+    LOG.debug("EchoService.echo, request={}, response={}",
+        request.getMessage(), response.getMessage());
+
+    return response;
+  }
 }

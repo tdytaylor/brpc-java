@@ -20,27 +20,25 @@ import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
-import java.net.URL;
-import java.util.List;
-
-import org.junit.Test;
-
 import com.baidu.brpc.client.instance.Endpoint;
 import com.baidu.brpc.test.BaseMockitoTest;
+import java.net.URL;
+import java.util.List;
+import org.junit.Test;
 
 public class FileNamingServiceTest extends BaseMockitoTest {
 
-    @Test
-    public void testAll() throws Exception {
-        URL url = Thread.currentThread().getContextClassLoader().getResource("test_server_list.txt");
-        String serverList = url.getFile();
-        FileNamingService namingService = new FileNamingService(new BrpcURL("file://" + serverList));
+  @Test
+  public void testAll() throws Exception {
+    URL url = Thread.currentThread().getContextClassLoader().getResource("test_server_list.txt");
+    String serverList = url.getFile();
+    FileNamingService namingService = new FileNamingService(new BrpcURL("file://" + serverList));
 
-        List<Endpoint> endPoints = namingService.lookup(null);
-        assertThat(endPoints.size(), is(1));
-        assertThat(endPoints, hasItems(
-                new Endpoint("127.0.0.1", 8002)
-        ));
-        namingService.unsubscribe(null);
-    }
+    List<Endpoint> endPoints = namingService.lookup(null);
+    assertThat(endPoints.size(), is(1));
+    assertThat(endPoints, hasItems(
+        new Endpoint("127.0.0.1", 8002)
+    ));
+    namingService.unsubscribe(null);
+  }
 }

@@ -24,5 +24,6 @@ import lombok.Setter;
 @Setter
 @Getter
 public class EchoRequest {
-    private String message;
+
+  private String message;
 }

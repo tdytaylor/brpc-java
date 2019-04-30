@@ -19,17 +19,18 @@ package com.baidu.brpc.example.spring.server;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 public class RpcServerTest {
-    public static void main(String[] args) {
-        ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext(
-                "classpath:applicationContext.server.xml");
-        context.start();
 
-        // make server keep running
-        synchronized (RpcServerTest.class) {
-            try {
-                RpcServerTest.class.wait();
-            } catch (Throwable e) {
-            }
-        }
+  public static void main(String[] args) {
+    ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext(
+        "classpath:applicationContext.server.xml");
+    context.start();
+
+    // make server keep running
+    synchronized (RpcServerTest.class) {
+      try {
+        RpcServerTest.class.wait();
+      } catch (Throwable e) {
+      }
     }
+  }
 }

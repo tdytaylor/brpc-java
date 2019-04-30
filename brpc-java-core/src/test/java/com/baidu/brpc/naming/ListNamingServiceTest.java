@@ -16,41 +16,39 @@
 
 package com.baidu.brpc.naming;
 
-import java.util.List;
-
-import com.baidu.brpc.client.instance.Endpoint;
-import com.baidu.brpc.test.BaseMockitoTest;
-
-import org.junit.Test;
-
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
+import com.baidu.brpc.client.instance.Endpoint;
+import com.baidu.brpc.test.BaseMockitoTest;
+import java.util.List;
+import org.junit.Test;
+
 public class ListNamingServiceTest extends BaseMockitoTest {
 
-    @Test
-    public void testUpdateServerList() {
-        String serverList = "list://1.1.1.1:1111,2.2.2.2:2222";
-        ListNamingService namingService = new ListNamingService(new BrpcURL(serverList));
-        List<Endpoint> endPoints = namingService.lookup(null);
-        assertThat(endPoints, hasItems(
-                new Endpoint("1.1.1.1", 1111),
-                new Endpoint("2.2.2.2", 2222)
-        ));
-        assertThat(endPoints.size(), is(2));
-    }
+  @Test
+  public void testUpdateServerList() {
+    String serverList = "list://1.1.1.1:1111,2.2.2.2:2222";
+    ListNamingService namingService = new ListNamingService(new BrpcURL(serverList));
+    List<Endpoint> endPoints = namingService.lookup(null);
+    assertThat(endPoints, hasItems(
+        new Endpoint("1.1.1.1", 1111),
+        new Endpoint("2.2.2.2", 2222)
+    ));
+    assertThat(endPoints.size(), is(2));
+  }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testUpdateServerListInvalid1() {
-        ListNamingService namingService = new ListNamingService(new BrpcURL(""));
-        namingService.lookup(null);
-    }
+  @Test(expected = IllegalArgumentException.class)
+  public void testUpdateServerListInvalid1() {
+    ListNamingService namingService = new ListNamingService(new BrpcURL(""));
+    namingService.lookup(null);
+  }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testUpdateServerListInvalid2() {
-        ListNamingService namingService = new ListNamingService(new BrpcURL("1.1.1.1,2.2.2.2"));
-        namingService.lookup(null);
-    }
+  @Test(expected = IllegalArgumentException.class)
+  public void testUpdateServerListInvalid2() {
+    ListNamingService namingService = new ListNamingService(new BrpcURL("1.1.1.1,2.2.2.2"));
+    namingService.lookup(null);
+  }
 
 }

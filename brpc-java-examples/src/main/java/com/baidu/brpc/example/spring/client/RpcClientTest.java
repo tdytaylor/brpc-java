@@ -18,30 +18,30 @@ package com.baidu.brpc.example.spring.client;
 
 import com.baidu.brpc.example.spring.api.EchoRequest;
 import com.baidu.brpc.example.spring.api.EchoResponse;
+import java.util.concurrent.Future;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
-import java.util.concurrent.Future;
-
 public class RpcClientTest {
-    public static void main(String[] args) {
-        ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext(
-                "classpath:applicationContext.client.xml");
-        context.start();
 
-        EchoFacade facade = context.getBean("echoFacadeImpl", EchoFacade.class);
-        EchoRequest request = new EchoRequest();
-        request.setMessage("hello");
-        EchoResponse response = facade.echo(request);
-        System.out.println(response.getMessage());
+  public static void main(String[] args) {
+    ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext(
+        "classpath:applicationContext.client.xml");
+    context.start();
 
-        EchoResponse response2 = facade.echo2(request);
-        System.out.println(response2.getMessage());
+    EchoFacade facade = context.getBean("echoFacadeImpl", EchoFacade.class);
+    EchoRequest request = new EchoRequest();
+    request.setMessage("hello");
+    EchoResponse response = facade.echo(request);
+    System.out.println(response.getMessage());
 
-        Future<EchoResponse> future = facade.echo3(request);
-        try {
-            future.get();
-        } catch (Exception ex) {
-            // ignore
-        }
+    EchoResponse response2 = facade.echo2(request);
+    System.out.println(response2.getMessage());
+
+    Future<EchoResponse> future = facade.echo3(request);
+    try {
+      future.get();
+    } catch (Exception ex) {
+      // ignore
     }
+  }
 }

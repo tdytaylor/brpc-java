@@ -26,6 +26,7 @@ import lombok.Setter;
 @Setter
 @Getter
 public class SofaRpcEncodePacket {
-    private SofaRpcProto.SofaRpcMeta rpcMeta;
-    private ByteBuf proto;
+
+  private SofaRpcProto.SofaRpcMeta rpcMeta;
+  private ByteBuf proto;
 }

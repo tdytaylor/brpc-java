@@ -23,13 +23,12 @@ import com.baidu.brpc.protocol.BrpcMeta;
  * Created by wenweihu86 on 2017/4/25.
  */
 public interface EchoServiceController {
-    /**
-     * brpc/sofa：
-     * serviceName默认是包名 + 类名，methodName是proto文件Service内对应方法名，
-     * hulu：
-     * serviceName默认是类名，methodName是proto文件Service内对应方法index。
-     */
-    @BrpcMeta(serviceName = "example.EchoService", methodName = "Echo")
+
+  /**
+   * brpc/sofa： serviceName默认是包名 + 类名，methodName是proto文件Service内对应方法名， hulu：
+   * serviceName默认是类名，methodName是proto文件Service内对应方法index。
+   */
+  @BrpcMeta(serviceName = "example.EchoService", methodName = "Echo")
 //    @BrpcMeta(serviceName = "EchoService", methodName = "0")
-    Echo.EchoResponse echo(Controller controller, Echo.EchoRequest request);
+  Echo.EchoResponse echo(Controller controller, Echo.EchoRequest request);
 }

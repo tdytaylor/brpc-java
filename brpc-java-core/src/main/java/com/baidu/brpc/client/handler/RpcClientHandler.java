@@ -22,7 +22,6 @@ import com.baidu.brpc.exceptions.BadSchemaException;
 import com.baidu.brpc.exceptions.NotEnoughDataException;
 import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.exceptions.TooBigDataException;
-
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
@@ -33,80 +32,80 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class RpcClientHandler extends SimpleChannelInboundHandler<Object> {
 
-    private RpcClient rpcClient;
+  private RpcClient rpcClient;
 
-    public RpcClientHandler(RpcClient rpcClient) {
-        this.rpcClient = rpcClient;
+  public RpcClientHandler(RpcClient rpcClient) {
+    this.rpcClient = rpcClient;
+  }
+
+  @Override
+  public void channelRead0(ChannelHandlerContext ctx, Object in) throws Exception {
+
+    ChannelInfo channelInfo = ChannelInfo.getClientChannelInfo(ctx.channel());
+    ByteBuf msg = (ByteBuf) in;
+    int len = msg.readableBytes();
+    if (len > 0) {
+      channelInfo.getRecvBuf().addBuffer(msg.retain());
     }
 
-    @Override
-    public void channelRead0(ChannelHandlerContext ctx, Object in) throws Exception {
-
-        ChannelInfo channelInfo = ChannelInfo.getClientChannelInfo(ctx.channel());
-        ByteBuf msg = (ByteBuf) in;
-        int len = msg.readableBytes();
-        if (len > 0) {
-            channelInfo.getRecvBuf().addBuffer(msg.retain());
+    ClientWorkTask[] tasks = new ClientWorkTask[64];
+    int i = 0;
+    while (channelInfo.getRecvBuf().readableBytes() > 0) {
+      try {
+        Object packet = channelInfo.getProtocol().decode(ctx, channelInfo.getRecvBuf(), false);
+        ClientWorkTask task = new ClientWorkTask(rpcClient, packet, channelInfo.getProtocol(), ctx);
+        tasks[i++] = task;
+        if (i == 64) {
+          rpcClient.getWorkThreadPool().submit(tasks, 0, i);
+          i = 0;
         }
-
-        ClientWorkTask[] tasks = new ClientWorkTask[64];
-        int i = 0;
-        while (channelInfo.getRecvBuf().readableBytes() > 0) {
-            try {
-                Object packet = channelInfo.getProtocol().decode(ctx, channelInfo.getRecvBuf(), false);
-                ClientWorkTask task = new ClientWorkTask(rpcClient, packet, channelInfo.getProtocol(), ctx);
-                tasks[i++] = task;
-                if (i == 64) {
-                    rpcClient.getWorkThreadPool().submit(tasks, 0, i);
-                    i = 0;
-                }
-            } catch (NotEnoughDataException ex1) {
-                break;
-            } catch (TooBigDataException ex2) {
-                throw new RpcException(RpcException.SERIALIZATION_EXCEPTION, ex2);
-            } catch (BadSchemaException ex3) {
-                throw new RpcException(RpcException.SERIALIZATION_EXCEPTION, ex3);
-            }
-        }
-
-        if (i > 0) {
-            rpcClient.getWorkThreadPool().submit(tasks, 0, i);
-        }
-
+      } catch (NotEnoughDataException ex1) {
+        break;
+      } catch (TooBigDataException ex2) {
+        throw new RpcException(RpcException.SERIALIZATION_EXCEPTION, ex2);
+      } catch (BadSchemaException ex3) {
+        throw new RpcException(RpcException.SERIALIZATION_EXCEPTION, ex3);
+      }
     }
 
-    @Override
-    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        final ChannelInfo channelInfo = ChannelInfo.getClientChannelInfo(ctx.channel());
-        String ip = channelInfo.getChannelGroup().getIp();
-        int port = channelInfo.getChannelGroup().getPort();
-        final String errMsg = String.format("channel is non active, ip=%s,port=%d", ip, port);
-        log.debug(errMsg);
-
-        if (channelInfo != null) {
-            rpcClient.triggerCallback(new Runnable() {
-                @Override
-                public void run() {
-                    RpcException ex = new RpcException(RpcException.NETWORK_EXCEPTION, errMsg);
-                    channelInfo.handleChannelException(ex);
-                }
-            });
-        }
+    if (i > 0) {
+      rpcClient.getWorkThreadPool().submit(tasks, 0, i);
     }
 
-    @Override
-    public void exceptionCaught(ChannelHandlerContext ctx, final Throwable cause) throws Exception {
-        log.info(cause.getMessage());
+  }
 
-        final ChannelInfo channelInfo = ChannelInfo.getClientChannelInfo(ctx.channel());
-        if (channelInfo != null) {
-            rpcClient.triggerCallback(new Runnable() {
-                @Override
-                public void run() {
-                    RpcException ex = new RpcException(RpcException.SERIALIZATION_EXCEPTION, cause);
-                    channelInfo.handleChannelException(ex);
-                }
-            });
+  @Override
+  public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+    final ChannelInfo channelInfo = ChannelInfo.getClientChannelInfo(ctx.channel());
+    String ip = channelInfo.getChannelGroup().getIp();
+    int port = channelInfo.getChannelGroup().getPort();
+    final String errMsg = String.format("channel is non active, ip=%s,port=%d", ip, port);
+    log.debug(errMsg);
+
+    if (channelInfo != null) {
+      rpcClient.triggerCallback(new Runnable() {
+        @Override
+        public void run() {
+          RpcException ex = new RpcException(RpcException.NETWORK_EXCEPTION, errMsg);
+          channelInfo.handleChannelException(ex);
         }
+      });
     }
+  }
+
+  @Override
+  public void exceptionCaught(ChannelHandlerContext ctx, final Throwable cause) throws Exception {
+    log.info(cause.getMessage());
+
+    final ChannelInfo channelInfo = ChannelInfo.getClientChannelInfo(ctx.channel());
+    if (channelInfo != null) {
+      rpcClient.triggerCallback(new Runnable() {
+        @Override
+        public void run() {
+          RpcException ex = new RpcException(RpcException.SERIALIZATION_EXCEPTION, cause);
+          channelInfo.handleChannelException(ex);
+        }
+      });
+    }
+  }
 }

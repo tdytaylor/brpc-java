@@ -18,9 +18,8 @@ package com.baidu.brpc.protocol;
 import io.netty.util.concurrent.FastThreadLocal;
 
 /**
- * Bprc http response implementation, used for http protocols.
- * So far, we use netty {@link io.netty.handler.codec.http.HttpClientCodec}
- * and {@link io.netty.handler.codec.http.HttpServerCodec}
+ * Bprc http response implementation, used for http protocols. So far, we use netty {@link
+ * io.netty.handler.codec.http.HttpClientCodec} and {@link io.netty.handler.codec.http.HttpServerCodec}
  * and {@link io.netty.handler.codec.http.HttpObjectAggregator} to handle http message.
  *
  * @author wangjiayin@baidu.com
@@ -30,15 +29,15 @@ import io.netty.util.concurrent.FastThreadLocal;
  */
 public class HttpResponse extends AbstractResponse {
 
-    private static final FastThreadLocal<HttpResponse> CURRENT_RPC_RESPONSE = new FastThreadLocal<HttpResponse>() {
-        @Override
-        protected HttpResponse initialValue() {
-            return new HttpResponse();
-        }
-    };
-
-    public static HttpResponse getHttpResponse() {
-        return CURRENT_RPC_RESPONSE.get();
+  private static final FastThreadLocal<HttpResponse> CURRENT_RPC_RESPONSE = new FastThreadLocal<HttpResponse>() {
+    @Override
+    protected HttpResponse initialValue() {
+      return new HttpResponse();
     }
+  };
+
+  public static HttpResponse getHttpResponse() {
+    return CURRENT_RPC_RESPONSE.get();
+  }
 
 }

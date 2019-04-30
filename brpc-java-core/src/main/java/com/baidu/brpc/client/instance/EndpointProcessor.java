@@ -17,7 +17,6 @@
 package com.baidu.brpc.client.instance;
 
 import com.baidu.brpc.client.channel.BrpcChannel;
-
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ConcurrentMap;
@@ -25,20 +24,20 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 public interface EndpointProcessor {
 
-    void addEndPoints(Collection<Endpoint> addList);
+  void addEndPoints(Collection<Endpoint> addList);
 
-    void deleteEndPoints(Collection<Endpoint> deleteList);
+  void deleteEndPoints(Collection<Endpoint> deleteList);
 
-    CopyOnWriteArrayList<BrpcChannel> getHealthyInstances();
+  CopyOnWriteArrayList<BrpcChannel> getHealthyInstances();
 
-    CopyOnWriteArrayList<BrpcChannel> getUnHealthyInstances();
+  CopyOnWriteArrayList<BrpcChannel> getUnHealthyInstances();
 
-    ConcurrentMap<Endpoint, BrpcChannel> getInstanceChannelMap();
+  ConcurrentMap<Endpoint, BrpcChannel> getInstanceChannelMap();
 
-    CopyOnWriteArrayList<Endpoint> getEndPoints();
+  CopyOnWriteArrayList<Endpoint> getEndPoints();
 
-    void updateUnHealthyInstances(List<BrpcChannel> channelGroups);
+  void updateUnHealthyInstances(List<BrpcChannel> channelGroups);
 
-    void stop();
+  void stop();
 
 }

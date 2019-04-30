@@ -28,6 +28,9 @@ import lombok.Setter;
 @Getter
 @EqualsAndHashCode
 public class SubscribeInfo extends NamingOptions {
-    /** the interface class name. */
-    private String service;
+
+  /**
+   * the interface class name.
+   */
+  private String service;
 }

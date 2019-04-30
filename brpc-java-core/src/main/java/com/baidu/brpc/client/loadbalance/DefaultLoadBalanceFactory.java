@@ -16,18 +16,19 @@
 package com.baidu.brpc.client.loadbalance;
 
 public class DefaultLoadBalanceFactory implements LoadBalanceFactory {
-    public LoadBalanceStrategy createLoadBalance(int loadBalanceType) {
-        switch (loadBalanceType) {
-            case LoadBalanceStrategy.LOAD_BALANCE_RANDOM:
-                return new RandomStrategy();
-            case LoadBalanceStrategy.LOAD_BALANCE_ROUND_ROBIN:
-                return new RoundRobinStrategy();
-            case LoadBalanceStrategy.LOAD_BALANCE_WEIGHT:
-                return new WeightStrategy();
-            case LoadBalanceStrategy.LOAD_BALANCE_FAIR:
-                return new FairStrategy();
-            default:
-                throw new IllegalArgumentException("unknown load balance type:" + loadBalanceType);
-        }
+
+  public LoadBalanceStrategy createLoadBalance(int loadBalanceType) {
+    switch (loadBalanceType) {
+      case LoadBalanceStrategy.LOAD_BALANCE_RANDOM:
+        return new RandomStrategy();
+      case LoadBalanceStrategy.LOAD_BALANCE_ROUND_ROBIN:
+        return new RoundRobinStrategy();
+      case LoadBalanceStrategy.LOAD_BALANCE_WEIGHT:
+        return new WeightStrategy();
+      case LoadBalanceStrategy.LOAD_BALANCE_FAIR:
+        return new FairStrategy();
+      default:
+        throw new IllegalArgumentException("unknown load balance type:" + loadBalanceType);
     }
+  }
 }

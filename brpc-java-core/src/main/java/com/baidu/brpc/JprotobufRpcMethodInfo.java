@@ -18,134 +18,134 @@ package com.baidu.brpc;
 
 import com.baidu.bjf.remoting.protobuf.Codec;
 import com.baidu.bjf.remoting.protobuf.ProtobufProxy;
-import com.google.protobuf.CodedOutputStream;
 import com.baidu.brpc.buffer.DynamicCompositeByteBuf;
+import com.google.protobuf.CodedOutputStream;
 import io.netty.buffer.ByteBuf;
+import java.io.IOException;
+import java.lang.reflect.Method;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.io.IOException;
-import java.lang.reflect.Method;
-
 /**
- * jprotobuf method info, which can be encode/decode jprotobuf class.
- * details for jprotobuf: https://github.com/jhunters/jprotobuf
+ * jprotobuf method info, which can be encode/decode jprotobuf class. details for jprotobuf:
+ * https://github.com/jhunters/jprotobuf
  */
 @Setter
 @Getter
 public class JprotobufRpcMethodInfo extends RpcMethodInfo {
-    private Codec inputCodec;
-    private Codec outputCodec;
 
-    public JprotobufRpcMethodInfo(Method method) {
-        super(method);
-        inputCodec = ProtobufProxy.create((Class) (inputClasses[0]));
-        outputCodec = ProtobufProxy.create((Class) outputClass);
-    }
+  private Codec inputCodec;
+  private Codec outputCodec;
 
-    @Override
-    public byte[] inputEncode(Object input) throws IOException {
-        if (inputCodec != null) {
-            return inputCodec.encode(input);
-        }
-        return null;
-    }
+  public JprotobufRpcMethodInfo(Method method) {
+    super(method);
+    inputCodec = ProtobufProxy.create((Class) (inputClasses[0]));
+    outputCodec = ProtobufProxy.create((Class) outputClass);
+  }
 
-    @Override
-    public void inputWriteToStream(Object input, CodedOutputStream stream) throws IOException {
-        if (inputCodec != null) {
-            inputCodec.writeTo(input, stream);
-        }
+  @Override
+  public byte[] inputEncode(Object input) throws IOException {
+    if (inputCodec != null) {
+      return inputCodec.encode(input);
     }
+    return null;
+  }
 
-    @Override
-    public Object outputDecode(byte[] output) throws IOException {
-        if (outputCodec != null) {
-            return outputCodec.decode(output);
-        }
-        return null;
+  @Override
+  public void inputWriteToStream(Object input, CodedOutputStream stream) throws IOException {
+    if (inputCodec != null) {
+      inputCodec.writeTo(input, stream);
     }
+  }
 
-    @Override
-    public Object outputDecode(ByteBuf output) throws IOException {
-        if (outputCodec != null) {
-            int len = output.readableBytes();
-            byte[] bytes = new byte[len];
-            output.readBytes(bytes);
-            return outputCodec.decode(bytes);
-        }
-        return null;
+  @Override
+  public Object outputDecode(byte[] output) throws IOException {
+    if (outputCodec != null) {
+      return outputCodec.decode(output);
     }
+    return null;
+  }
 
-    @Override
-    public Object outputDecode(DynamicCompositeByteBuf output) throws IOException {
-        if (outputCodec != null) {
-            int len = output.readableBytes();
-            byte[] bytes = new byte[len];
-            output.readBytes(bytes);
-            return outputCodec.decode(bytes);
-        }
-        return null;
+  @Override
+  public Object outputDecode(ByteBuf output) throws IOException {
+    if (outputCodec != null) {
+      int len = output.readableBytes();
+      byte[] bytes = new byte[len];
+      output.readBytes(bytes);
+      return outputCodec.decode(bytes);
     }
+    return null;
+  }
 
-    @Override
-    public Object inputDecode(byte[] input) throws IOException {
-        if (inputCodec != null) {
-            return inputCodec.decode(input);
-        }
-        return null;
+  @Override
+  public Object outputDecode(DynamicCompositeByteBuf output) throws IOException {
+    if (outputCodec != null) {
+      int len = output.readableBytes();
+      byte[] bytes = new byte[len];
+      output.readBytes(bytes);
+      return outputCodec.decode(bytes);
     }
+    return null;
+  }
 
-    @Override
-    public Object inputDecode(ByteBuf input) throws IOException {
-        if (inputCodec != null) {
-            int len = input.readableBytes();
-            byte[] bytes = new byte[len];
-            input.readBytes(bytes);
-            return inputCodec.decode(bytes);
-        }
-        return null;
+  @Override
+  public Object inputDecode(byte[] input) throws IOException {
+    if (inputCodec != null) {
+      return inputCodec.decode(input);
     }
+    return null;
+  }
 
-    @Override
-    public Object inputDecode(DynamicCompositeByteBuf input) throws IOException {
-        if (inputCodec != null) {
-            int len = input.readableBytes();
-            byte[] bytes = new byte[len];
-            input.readBytes(bytes);
-            return inputCodec.decode(bytes);
-        }
-        return null;
+  @Override
+  public Object inputDecode(ByteBuf input) throws IOException {
+    if (inputCodec != null) {
+      int len = input.readableBytes();
+      byte[] bytes = new byte[len];
+      input.readBytes(bytes);
+      return inputCodec.decode(bytes);
     }
+    return null;
+  }
 
-    @Override
-    public byte[] outputEncode(Object output) throws IOException {
-        if (outputCodec != null) {
-            return outputCodec.encode(output);
-        }
-        return null;
+  @Override
+  public Object inputDecode(DynamicCompositeByteBuf input) throws IOException {
+    if (inputCodec != null) {
+      int len = input.readableBytes();
+      byte[] bytes = new byte[len];
+      input.readBytes(bytes);
+      return inputCodec.decode(bytes);
     }
+    return null;
+  }
 
-    @Override
-    public void outputWriteToStream(Object output, CodedOutputStream stream) throws IOException {
-        if (outputCodec != null) {
-            outputCodec.writeTo(output, stream);
-        }
+  @Override
+  public byte[] outputEncode(Object output) throws IOException {
+    if (outputCodec != null) {
+      return outputCodec.encode(output);
     }
+    return null;
+  }
 
-    @Override
-    public int getInputSerializedSize(Object input) throws IOException {
-        if (inputCodec != null) {
-            return inputCodec.size(input);
-        }
-        return 0;
+  @Override
+  public void outputWriteToStream(Object output, CodedOutputStream stream) throws IOException {
+    if (outputCodec != null) {
+      outputCodec.writeTo(output, stream);
     }
+  }
 
-    @Override
-    public int getOutputSerializedSize(Object output) throws IOException {
-        if (outputCodec != null) {
-            return outputCodec.size(output);
-        }
-        return 0;
+  @Override
+  public int getInputSerializedSize(Object input) throws IOException {
+    if (inputCodec != null) {
+      return inputCodec.size(input);
     }
+    return 0;
+  }
+
+  @Override
+  public int getOutputSerializedSize(Object output) throws IOException {
+    if (outputCodec != null) {
+      return outputCodec.size(output);
+    }
+    return 0;
+  }
 }

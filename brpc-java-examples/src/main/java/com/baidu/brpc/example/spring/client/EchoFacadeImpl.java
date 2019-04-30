@@ -22,55 +22,56 @@ import com.baidu.brpc.example.spring.api.EchoRequest;
 import com.baidu.brpc.example.spring.api.EchoResponse;
 import com.baidu.brpc.example.spring.api.EchoService;
 import com.baidu.brpc.spring.annotation.RpcProxy;
+import java.util.concurrent.Future;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.stereotype.Service;
-
-import java.util.concurrent.Future;
 
 @Service
 @Setter
 @Getter
 public class EchoFacadeImpl implements EchoFacade {
-    @RpcProxy(rpcClientOptionsBeanName = "rpcClientOptions",
-            interceptorBeanName = "customInterceptor")
-    private EchoService echoService;
 
-    @RpcProxy(rpcClientOptionsBeanName = "rpcClientOptions",
-            interceptorBeanName = "customInterceptor")
-    private EchoService echoService2;
+  @RpcProxy(rpcClientOptionsBeanName = "rpcClientOptions",
+      interceptorBeanName = "customInterceptor")
+  private EchoService echoService;
 
-    /**
-     * async service interface proxy will create new RpcClient,
-     * not used RpcClient of sync interface proxy.
-     */
-    @RpcProxy(rpcClientOptionsBeanName = "rpcClientOptions",
-            interceptorBeanName = "customInterceptor")
-    private AsyncEchoService echoService3;
+  @RpcProxy(rpcClientOptionsBeanName = "rpcClientOptions",
+      interceptorBeanName = "customInterceptor")
+  private EchoService echoService2;
 
-    public EchoResponse echo(EchoRequest request) {
-        System.out.println(echoService.hashCode());
-        return echoService.echo(request);
-    }
+  /**
+   * async service interface proxy will create new RpcClient, not used RpcClient of sync interface
+   * proxy.
+   */
+  @RpcProxy(rpcClientOptionsBeanName = "rpcClientOptions",
+      interceptorBeanName = "customInterceptor")
+  private AsyncEchoService echoService3;
 
-    public EchoResponse echo2(EchoRequest request) {
-        System.out.println(echoService2.hashCode());
-        return echoService2.echo(request);
-    }
+  public EchoResponse echo(EchoRequest request) {
+    System.out.println(echoService.hashCode());
+    return echoService.echo(request);
+  }
 
-    public Future<EchoResponse> echo3(EchoRequest request) {
-        System.out.println(echoService3.hashCode());
-        Future<EchoResponse> future = echoService3.echo(request, new RpcCallbackAdaptor<EchoResponse>() {
-            @Override
-            public void success(EchoResponse response) {
-                System.out.println(response.getMessage());
-            }
+  public EchoResponse echo2(EchoRequest request) {
+    System.out.println(echoService2.hashCode());
+    return echoService2.echo(request);
+  }
 
-            @Override
-            public void fail(Throwable e) {
-                e.printStackTrace();
-            }
+  public Future<EchoResponse> echo3(EchoRequest request) {
+    System.out.println(echoService3.hashCode());
+    Future<EchoResponse> future = echoService3
+        .echo(request, new RpcCallbackAdaptor<EchoResponse>() {
+          @Override
+          public void success(EchoResponse response) {
+            System.out.println(response.getMessage());
+          }
+
+          @Override
+          public void fail(Throwable e) {
+            e.printStackTrace();
+          }
         });
-        return future;
-    }
+    return future;
+  }
 }

@@ -16,80 +16,79 @@
 
 package com.baidu.brpc.protocol;
 
-import java.lang.reflect.Method;
-import java.util.Map;
-
 import com.baidu.brpc.Controller;
 import com.baidu.brpc.RpcMethodInfo;
 import com.baidu.brpc.client.RpcCallback;
 import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.protocol.nshead.NSHead;
-
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
+import java.lang.reflect.Method;
+import java.util.Map;
 import lombok.Getter;
 import lombok.Setter;
 
 @Setter
 @Getter
 public abstract class AbstractRequest implements Request {
-    private Object msg;
-    private long logId;
-    private Object target;
-    private Method targetMethod;
-    private RpcMethodInfo rpcMethodInfo;
-    private String serviceName;
-    private String methodName;
-    private Object[] args;
-    private NSHead nsHead;
-    private Map<String, String> kvAttachment;
-    private ByteBuf binaryAttachment;
-    private int compressType;
-    private RpcException exception;
-    private Channel channel;
-    private String auth;
-    private Long traceId;
-    private Long spanId;
-    private Long parentSpanId;
-    private Controller controller;
-    private RpcCallback callback;
 
-    @Override
-    public void reset() {
-        msg = null;
-        logId = -1;
-        target = null;
-        targetMethod = null;
-        rpcMethodInfo = null;
-        serviceName = "";
-        methodName = "";
-        args = null;
-        nsHead = null;
-        kvAttachment = null;
-        binaryAttachment = null;
-        compressType = 0;
-        exception = null;
-        channel = null;
-        traceId = null;
-        spanId = null;
-        parentSpanId = null;
-        controller = null;
-        callback = null;
-    }
+  private Object msg;
+  private long logId;
+  private Object target;
+  private Method targetMethod;
+  private RpcMethodInfo rpcMethodInfo;
+  private String serviceName;
+  private String methodName;
+  private Object[] args;
+  private NSHead nsHead;
+  private Map<String, String> kvAttachment;
+  private ByteBuf binaryAttachment;
+  private int compressType;
+  private RpcException exception;
+  private Channel channel;
+  private String auth;
+  private Long traceId;
+  private Long spanId;
+  private Long parentSpanId;
+  private Controller controller;
+  private RpcCallback callback;
 
-    @Override
-    public Request retain() {
-        if (binaryAttachment != null) {
-            binaryAttachment.retain();
-        }
-        return this;
-    }
+  @Override
+  public void reset() {
+    msg = null;
+    logId = -1;
+    target = null;
+    targetMethod = null;
+    rpcMethodInfo = null;
+    serviceName = "";
+    methodName = "";
+    args = null;
+    nsHead = null;
+    kvAttachment = null;
+    binaryAttachment = null;
+    compressType = 0;
+    exception = null;
+    channel = null;
+    traceId = null;
+    spanId = null;
+    parentSpanId = null;
+    controller = null;
+    callback = null;
+  }
 
-    @Override
-    public void release() {
-        if (binaryAttachment != null && binaryAttachment.refCnt() > 0) {
-            binaryAttachment.release();
-            binaryAttachment = null;
-        }
+  @Override
+  public Request retain() {
+    if (binaryAttachment != null) {
+      binaryAttachment.retain();
     }
+    return this;
+  }
+
+  @Override
+  public void release() {
+    if (binaryAttachment != null && binaryAttachment.refCnt() > 0) {
+      binaryAttachment.release();
+      binaryAttachment = null;
+    }
+  }
 }

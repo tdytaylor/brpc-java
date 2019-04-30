@@ -27,21 +27,18 @@ import java.lang.annotation.Target;
 @Documented
 public @interface NSHeadMeta {
 
-    /**
-     * provider
-     * @return
-     */
-    String provider() default "";
+  /**
+   * provider
+   */
+  String provider() default "";
 
-    /**
-     * id
-     * @return
-     */
-    short id() default 0x00;
+  /**
+   * id
+   */
+  short id() default 0x00;
 
-    /**
-     * version
-     * @return
-     */
-    short version() default 0x01;
+  /**
+   * version
+   */
+  short version() default 0x01;
 }

@@ -16,112 +16,109 @@
 
 package com.baidu.brpc.protocol;
 
-import java.lang.reflect.Method;
-import java.util.Map;
-
 import com.baidu.brpc.Controller;
 import com.baidu.brpc.RpcMethodInfo;
 import com.baidu.brpc.client.RpcCallback;
 import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.protocol.nshead.NSHead;
-
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.handler.codec.http.FullHttpRequest;
+import java.lang.reflect.Method;
+import java.util.Map;
 
 public interface Request {
 
-    /**
-     * The msg param is the real request content to sent by netty.
-     * For http protocols, the msg is an instance of {@link FullHttpRequest}.
-     * For tcp protocols, the msg may be an instance of byte[].
-     *
-     * @see HttpRequest
-     * @see RpcRequest
-     */
-    Object getMsg();
+  /**
+   * The msg param is the real request content to sent by netty. For http protocols, the msg is an
+   * instance of {@link FullHttpRequest}. For tcp protocols, the msg may be an instance of byte[].
+   *
+   * @see HttpRequest
+   * @see RpcRequest
+   */
+  Object getMsg();
 
-    void setMsg(Object o);
+  void setMsg(Object o);
 
-    long getLogId();
+  long getLogId();
 
-    void setLogId(long logId);
+  void setLogId(long logId);
 
-    Object getTarget();
+  Object getTarget();
 
-    void setTarget(Object obj);
+  void setTarget(Object obj);
 
-    Method getTargetMethod();
+  Method getTargetMethod();
 
-    void setTargetMethod(Method method);
+  void setTargetMethod(Method method);
 
-    RpcMethodInfo getRpcMethodInfo();
+  RpcMethodInfo getRpcMethodInfo();
 
-    void setRpcMethodInfo(RpcMethodInfo rpcMethodInfo);
+  void setRpcMethodInfo(RpcMethodInfo rpcMethodInfo);
 
-    String getServiceName();
+  String getServiceName();
 
-    void setServiceName(String serviceName);
+  void setServiceName(String serviceName);
 
-    String getMethodName();
+  String getMethodName();
 
-    void setMethodName(String methodName);
+  void setMethodName(String methodName);
 
-    Object[] getArgs();
+  Object[] getArgs();
 
-    void setArgs(Object[] newArgs);
+  void setArgs(Object[] newArgs);
 
-    Map<String, String> getKvAttachment();
+  Map<String, String> getKvAttachment();
 
-    void setKvAttachment(Map<String, String> requestKvAttachment);
+  void setKvAttachment(Map<String, String> requestKvAttachment);
 
-    ByteBuf getBinaryAttachment();
+  ByteBuf getBinaryAttachment();
 
-    void setBinaryAttachment(ByteBuf requestBinaryAttachment);
+  void setBinaryAttachment(ByteBuf requestBinaryAttachment);
 
-    int getCompressType();
+  int getCompressType();
 
-    void setCompressType(int number);
+  void setCompressType(int number);
 
-    RpcException getException();
+  RpcException getException();
 
-    void setException(RpcException e);
+  void setException(RpcException e);
 
-    Channel getChannel();
+  Channel getChannel();
 
-    void setChannel(Channel channel);
+  void setChannel(Channel channel);
 
-    NSHead getNsHead();
+  NSHead getNsHead();
 
-    void setNsHead(NSHead nsHead);
+  void setNsHead(NSHead nsHead);
 
-    Request retain();
+  Request retain();
 
-    void release();
+  void release();
 
-    void reset();
+  void reset();
 
-    String getAuth();
+  String getAuth();
 
-    void setAuth(String auth);
+  void setAuth(String auth);
 
-    Long getTraceId();
+  Long getTraceId();
 
-    void setTraceId(Long traceId);
+  void setTraceId(Long traceId);
 
-    Long getSpanId();
+  Long getSpanId();
 
-    void setSpanId(Long spanId);
+  void setSpanId(Long spanId);
 
-    Long getParentSpanId();
+  Long getParentSpanId();
 
-    void setParentSpanId(Long parentSpanId);
+  void setParentSpanId(Long parentSpanId);
 
-    Controller getController();
+  Controller getController();
 
-    void setController(Controller controller);
+  void setController(Controller controller);
 
-    RpcCallback getCallback();
+  RpcCallback getCallback();
 
-    void setCallback(RpcCallback callback);
+  void setCallback(RpcCallback callback);
 }

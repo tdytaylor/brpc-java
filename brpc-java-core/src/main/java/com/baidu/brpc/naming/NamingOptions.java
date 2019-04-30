@@ -22,18 +22,19 @@ import lombok.Setter;
 @Setter
 @Getter
 public class NamingOptions {
-    /**
-     * identify different service implementation for the same interface.
-     */
-    private String group = "normal";
 
-    /**
-     * identify service version.
-     */
-    private String version = "1.0.0";
+  /**
+   * identify different service implementation for the same interface.
+   */
+  private String group = "normal";
 
-    /**
-     * if true, naming service will throw exception when register/subscribe exceptions.
-     */
-    private boolean ignoreFailOfNamingService = false;
+  /**
+   * identify service version.
+   */
+  private String version = "1.0.0";
+
+  /**
+   * if true, naming service will throw exception when register/subscribe exceptions.
+   */
+  private boolean ignoreFailOfNamingService = false;
 }

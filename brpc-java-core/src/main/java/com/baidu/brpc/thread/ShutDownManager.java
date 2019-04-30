@@ -19,61 +19,60 @@ package com.baidu.brpc.thread;
 import com.baidu.brpc.utils.ThreadPool;
 import io.netty.channel.EventLoopGroup;
 import io.netty.util.Timer;
-import lombok.extern.slf4j.Slf4j;
-
 import java.util.concurrent.ExecutorService;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class ShutDownManager {
 
-    private static volatile ShutDownManager clientShutDownManager;
+  private static volatile ShutDownManager clientShutDownManager;
 
-    static {
-        // do clean work when jvm shut down
+  static {
+    // do clean work when jvm shut down
 
-        Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
-            @Override
-            public void run() {
-                log.info("Brpc do clean work...");
+    Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
+      @Override
+      public void run() {
+        log.info("Brpc do clean work...");
 
-                EventLoopGroup ioThread = BrpcIoThreadPoolInstance.getInstance();
-                ThreadPool workThread = BrpcWorkThreadPoolInstance.getInstance();
-                ExecutorService clientCallBackThread = ClientCallBackThreadPoolInstance.getInstance();
-                Timer clientHealthCheckerTimer = ClientHealthCheckTimerInstance.getInstance();
-                Timer clientTimeOutTimer = ClientTimeoutTimerInstance.getInstance();
+        EventLoopGroup ioThread = BrpcIoThreadPoolInstance.getInstance();
+        ThreadPool workThread = BrpcWorkThreadPoolInstance.getInstance();
+        ExecutorService clientCallBackThread = ClientCallBackThreadPoolInstance.getInstance();
+        Timer clientHealthCheckerTimer = ClientHealthCheckTimerInstance.getInstance();
+        Timer clientTimeOutTimer = ClientTimeoutTimerInstance.getInstance();
 
-                if (clientCallBackThread != null) {
-                    clientCallBackThread.shutdownNow();
-                }
-                if (ioThread != null) {
-                    ioThread.shutdownGracefully();
-                }
-                if (workThread != null) {
-                    workThread.stop();
-                }
-                if (clientHealthCheckerTimer != null) {
-                    clientHealthCheckerTimer.stop();
-                }
-                if (clientTimeOutTimer != null) {
-                    clientTimeOutTimer.stop();
-                }
-            }
-        }));
-    }
-
-    private ShutDownManager() {
-
-    }
-
-    public static ShutDownManager getInstance() {
-
-        if (clientShutDownManager == null) {
-            synchronized (ShutDownManager.class) {
-                if (clientShutDownManager == null) {
-                    clientShutDownManager = new ShutDownManager();
-                }
-            }
+        if (clientCallBackThread != null) {
+          clientCallBackThread.shutdownNow();
         }
-        return clientShutDownManager;
+        if (ioThread != null) {
+          ioThread.shutdownGracefully();
+        }
+        if (workThread != null) {
+          workThread.stop();
+        }
+        if (clientHealthCheckerTimer != null) {
+          clientHealthCheckerTimer.stop();
+        }
+        if (clientTimeOutTimer != null) {
+          clientTimeOutTimer.stop();
+        }
+      }
+    }));
+  }
+
+  private ShutDownManager() {
+
+  }
+
+  public static ShutDownManager getInstance() {
+
+    if (clientShutDownManager == null) {
+      synchronized (ShutDownManager.class) {
+        if (clientShutDownManager == null) {
+          clientShutDownManager = new ShutDownManager();
+        }
+      }
     }
+    return clientShutDownManager;
+  }
 }

@@ -15,9 +15,8 @@
  */
 package com.baidu.brpc.spring.annotation;
 
-import java.util.List;
-
 import com.baidu.brpc.spring.RpcProxyFactoryBean;
+import java.util.List;
 
 /**
  * Listener class for {@link RpcAnnotationResolver} while doing annotation parser action.
@@ -27,33 +26,34 @@ import com.baidu.brpc.spring.RpcProxyFactoryBean;
  */
 public interface RpcAnnotationResolverListener {
 
-	/**
-	 * This method will called after {@link RpcExporter} annotation parsed.
-	 *
-	 * @param rpcExporter {@link RpcExporter} annotation
-	 * @param port real port
-	 * @param bean target bean
-	 * @param registerServices registered service list
-	 */
-	void onRpcExporterAnnotationParsered(RpcExporter rpcExporter, int port, Object bean, List<Object> registerServices);
-
-	
-	/**
-	 * Destroy.
-	 */
-	void destroy();
+  /**
+   * This method will called after {@link RpcExporter} annotation parsed.
+   *
+   * @param rpcExporter {@link RpcExporter} annotation
+   * @param port real port
+   * @param bean target bean
+   * @param registerServices registered service list
+   */
+  void onRpcExporterAnnotationParsered(RpcExporter rpcExporter, int port, Object bean,
+      List<Object> registerServices);
 
 
-	/**
-	 * This method will called after {@link RpcProxy} annotation parsed.
-	 *
-	 * @param rpcProxy {@link RpcProxy} annotation
-	 * @param newRpcProxyFactoryBean a new created {@link RpcProxyFactoryBean}
-	 * @param object target PROXY bean for this {@link RpcProxy} annotation delegated
-	 */
-	void onRpcProxyAnnotationParsed(RpcProxy rpcProxy, RpcProxyFactoryBean newRpcProxyFactoryBean, Object object);
-	
-	
-	
+  /**
+   * Destroy.
+   */
+  void destroy();
+
+
+  /**
+   * This method will called after {@link RpcProxy} annotation parsed.
+   *
+   * @param rpcProxy {@link RpcProxy} annotation
+   * @param newRpcProxyFactoryBean a new created {@link RpcProxyFactoryBean}
+   * @param object target PROXY bean for this {@link RpcProxy} annotation delegated
+   */
+  void onRpcProxyAnnotationParsed(RpcProxy rpcProxy, RpcProxyFactoryBean newRpcProxyFactoryBean,
+      Object object);
+
+
 }
 

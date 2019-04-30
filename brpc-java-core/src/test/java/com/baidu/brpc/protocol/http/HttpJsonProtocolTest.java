@@ -18,11 +18,6 @@ package com.baidu.brpc.protocol.http;
 
 import static org.junit.Assert.assertEquals;
 
-import java.lang.reflect.Method;
-
-import org.junit.Assert;
-import org.junit.Test;
-
 import com.baidu.brpc.RpcMethodInfo;
 import com.baidu.brpc.protocol.HttpRequest;
 import com.baidu.brpc.protocol.HttpResponse;
@@ -34,7 +29,6 @@ import com.baidu.brpc.protocol.http.json.HelloWorldServiceImpl;
 import com.baidu.brpc.server.ServiceManager;
 import com.baidu.brpc.utils.ByteBufUtils;
 import com.google.gson.Gson;
-
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.http.DefaultFullHttpRequest;
@@ -42,66 +36,71 @@ import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpVersion;
+import java.lang.reflect.Method;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class HttpJsonProtocolTest {
 
-    private HttpRpcProtocol protocol = new HttpRpcProtocol(ProtocolType.PROTOCOL_HTTP_JSON_VALUE, "utf-8");
+  private HttpRpcProtocol protocol = new HttpRpcProtocol(ProtocolType.PROTOCOL_HTTP_JSON_VALUE,
+      "utf-8");
 
-    @Test
-    public void testEncodeHttpRequest() throws Exception {
-        Request request = new HttpRequest();
-        request.setTargetMethod(HelloWorldService.class.getMethods()[0]);
-        request.setArgs(new Object[] {"hello"});
-        request.setLogId(1L);
-        ByteBuf buf = protocol.encodeRequest(request);
-        Assert.assertTrue(buf.readableBytes() > 0);
-        System.out.println(buf.readableBytes());
-        System.out.println(ByteBufUtils.byteBufToString(buf));
-    }
+  @Test
+  public void testEncodeHttpRequest() throws Exception {
+    Request request = new HttpRequest();
+    request.setTargetMethod(HelloWorldService.class.getMethods()[0]);
+    request.setArgs(new Object[]{"hello"});
+    request.setLogId(1L);
+    ByteBuf buf = protocol.encodeRequest(request);
+    Assert.assertTrue(buf.readableBytes() > 0);
+    System.out.println(buf.readableBytes());
+    System.out.println(ByteBufUtils.byteBufToString(buf));
+  }
 
-    @Test
-    public void testDecodeHttpRequest() {
-        ServiceManager serviceManager = ServiceManager.getInstance();
-        serviceManager.registerService(new HelloWorldServiceImpl(), null);
-        ByteBuf content = Unpooled.wrappedBuffer(new Gson().toJson("hello").getBytes());
+  @Test
+  public void testDecodeHttpRequest() {
+    ServiceManager serviceManager = ServiceManager.getInstance();
+    serviceManager.registerService(new HelloWorldServiceImpl(), null);
+    ByteBuf content = Unpooled.wrappedBuffer(new Gson().toJson("hello").getBytes());
 
-        FullHttpRequest fullHttpRequest = new DefaultFullHttpRequest(HttpVersion.HTTP_1_0, HttpMethod.GET,
-                "/HelloWorldService/hello", content);
-        fullHttpRequest.headers().set("log-id", 1);
-        fullHttpRequest.setUri("/HelloWorldService/hello");
-        fullHttpRequest.headers().set(HttpHeaderNames.CONTENT_TYPE, "application/json; charset=utf-8");
+    FullHttpRequest fullHttpRequest = new DefaultFullHttpRequest(HttpVersion.HTTP_1_0,
+        HttpMethod.GET,
+        "/HelloWorldService/hello", content);
+    fullHttpRequest.headers().set("log-id", 1);
+    fullHttpRequest.setUri("/HelloWorldService/hello");
+    fullHttpRequest.headers().set(HttpHeaderNames.CONTENT_TYPE, "application/json; charset=utf-8");
 
-        Request request = protocol.decodeRequest(fullHttpRequest);
+    Request request = protocol.decodeRequest(fullHttpRequest);
 
-        assertEquals("HelloWorldService", request.getRpcMethodInfo().getServiceName());
-        assertEquals("hello", request.getRpcMethodInfo().getMethodName());
-        assertEquals(HelloWorldService.class.getMethods()[0], request.getTargetMethod());
-        assertEquals(HelloWorldServiceImpl.class, request.getTarget().getClass());
-    }
+    assertEquals("HelloWorldService", request.getRpcMethodInfo().getServiceName());
+    assertEquals("hello", request.getRpcMethodInfo().getMethodName());
+    assertEquals(HelloWorldService.class.getMethods()[0], request.getTargetMethod());
+    assertEquals(HelloWorldServiceImpl.class, request.getTarget().getClass());
+  }
 
-    @Test
-    public void testEncodeHttpResponse() throws Exception {
+  @Test
+  public void testEncodeHttpResponse() throws Exception {
 
-        HttpRequest request = new HttpRequest();
-        String contentType = "application/json; charset=utf-8";
-        request.headers().set(HttpHeaderNames.CONTENT_TYPE, contentType);
-        request.headers().set(HttpHeaderNames.CONTENT_ENCODING, "utf-8");
-        Response response = new HttpResponse();
-        response.setResult("hello world");
-        protocol.encodeResponse(request, response);
+    HttpRequest request = new HttpRequest();
+    String contentType = "application/json; charset=utf-8";
+    request.headers().set(HttpHeaderNames.CONTENT_TYPE, contentType);
+    request.headers().set(HttpHeaderNames.CONTENT_ENCODING, "utf-8");
+    Response response = new HttpResponse();
+    response.setResult("hello world");
+    protocol.encodeResponse(request, response);
 //        FullHttpResponse fullHttpResponse = (FullHttpResponse) response.getMsg();
 //
 //        assertEquals(contentType, fullHttpResponse.headers().get(HttpHeaderNames.CONTENT_TYPE));
 //        assertEquals(encodeBody(response.getResult()).length, fullHttpResponse.content().readableBytes());
-    }
+  }
 
-    public byte[] encodeBody(Object body) throws Exception {
-        Method method = protocol.getClass().getDeclaredMethod("encodeBody", int.class, String.class,
-                Object.class, RpcMethodInfo.class);
-        method.setAccessible(true);
-        Object r = method.invoke(protocol, ProtocolType.PROTOCOL_HTTP_JSON_VALUE, "utf-8", body,
-                new RpcMethodInfo(HelloWorldService.class.getMethods()[0]));
-        return (byte[]) r;
-    }
+  public byte[] encodeBody(Object body) throws Exception {
+    Method method = protocol.getClass().getDeclaredMethod("encodeBody", int.class, String.class,
+        Object.class, RpcMethodInfo.class);
+    method.setAccessible(true);
+    Object r = method.invoke(protocol, ProtocolType.PROTOCOL_HTTP_JSON_VALUE, "utf-8", body,
+        new RpcMethodInfo(HelloWorldService.class.getMethods()[0]));
+    return (byte[]) r;
+  }
 
 }

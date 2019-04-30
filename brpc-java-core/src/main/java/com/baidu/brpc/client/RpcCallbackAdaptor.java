@@ -17,22 +17,21 @@
 package com.baidu.brpc.client;
 
 import com.baidu.brpc.Controller;
-
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public abstract class RpcCallbackAdaptor<T> implements RpcCallback<T> {
 
-    @Override
-    public void success(T response) {
-    }
+  @Override
+  public void success(T response) {
+  }
 
-    @Override
-    public void success(Controller controller, T response) {
-    }
+  @Override
+  public void success(Controller controller, T response) {
+  }
 
-    @Override
-    public void fail(Throwable e) {
-        log.warn("sync call failed, ex:", e);
-    }
+  @Override
+  public void fail(Throwable e) {
+    log.warn("sync call failed, ex:", e);
+  }
 }

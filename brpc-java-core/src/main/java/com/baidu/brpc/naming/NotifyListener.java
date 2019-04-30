@@ -16,22 +16,21 @@
 package com.baidu.brpc.naming;
 
 import com.baidu.brpc.client.instance.Endpoint;
-
 import java.util.Collection;
 
 /**
  * NotifyListener. (API, Prototype, ThreadSafe)
- * 
+ *
  * @author xiemalin
  * @since 2.27
  */
 public interface NotifyListener {
 
-    /**
-     * 当收到服务变更通知时触发。
-     *
-     * @param addList to be added endpoints
-     * @param deleteList to be deleted endpoints
-     */
-    void notify(Collection<Endpoint> addList, Collection<Endpoint> deleteList);
+  /**
+   * 当收到服务变更通知时触发。
+   *
+   * @param addList to be added endpoints
+   * @param deleteList to be deleted endpoints
+   */
+  void notify(Collection<Endpoint> addList, Collection<Endpoint> deleteList);
 }

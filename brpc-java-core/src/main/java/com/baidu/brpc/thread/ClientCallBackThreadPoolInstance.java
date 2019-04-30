@@ -17,36 +17,35 @@
 package com.baidu.brpc.thread;
 
 import com.baidu.brpc.utils.CustomThreadFactory;
-
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class ClientCallBackThreadPoolInstance {
 
-    private static volatile ExecutorService callbackThreadPool;
+  private static volatile ExecutorService callbackThreadPool;
 
-    private ClientCallBackThreadPoolInstance() {
+  private ClientCallBackThreadPoolInstance() {
 
-    }
+  }
 
-    /**
-     * threadNum only works when thread pool instance create in the first time
-     */
-    public static ExecutorService getOrCreateInstance(int threadNum) {
+  /**
+   * threadNum only works when thread pool instance create in the first time
+   */
+  public static ExecutorService getOrCreateInstance(int threadNum) {
+    if (callbackThreadPool == null) {
+      synchronized (ClientCallBackThreadPoolInstance.class) {
         if (callbackThreadPool == null) {
-            synchronized (ClientCallBackThreadPoolInstance.class) {
-                if (callbackThreadPool == null) {
-                    callbackThreadPool = Executors.newFixedThreadPool(threadNum,
-                            new CustomThreadFactory("invalid-channel-callback-thread"));
-                }
-            }
+          callbackThreadPool = Executors.newFixedThreadPool(threadNum,
+              new CustomThreadFactory("invalid-channel-callback-thread"));
         }
-
-        return callbackThreadPool;
+      }
     }
 
-    public static ExecutorService getInstance() {
-        return callbackThreadPool;
-    }
+    return callbackThreadPool;
+  }
+
+  public static ExecutorService getInstance() {
+    return callbackThreadPool;
+  }
 
 }

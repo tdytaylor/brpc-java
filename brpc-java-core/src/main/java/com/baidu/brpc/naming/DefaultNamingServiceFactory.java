@@ -17,16 +17,17 @@
 package com.baidu.brpc.naming;
 
 public class DefaultNamingServiceFactory implements NamingServiceFactory {
-    public NamingService createNamingService(BrpcURL url) {
-        String schema = url.getSchema();
-        if ("list".equals(schema)) {
-            return new ListNamingService(url);
-        } else if ("file".equals(schema)) {
-            return new FileNamingService(url);
-        } else if ("dns".equals(schema)) {
-            return new DnsNamingService(url);
-        } else {
-            throw new IllegalArgumentException("schema is not valid:" + schema);
-        }
+
+  public NamingService createNamingService(BrpcURL url) {
+    String schema = url.getSchema();
+    if ("list".equals(schema)) {
+      return new ListNamingService(url);
+    } else if ("file".equals(schema)) {
+      return new FileNamingService(url);
+    } else if ("dns".equals(schema)) {
+      return new DnsNamingService(url);
+    } else {
+      throw new IllegalArgumentException("schema is not valid:" + schema);
     }
+  }
 }

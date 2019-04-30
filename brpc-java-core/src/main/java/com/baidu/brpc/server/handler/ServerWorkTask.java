@@ -16,8 +16,6 @@
 
 package com.baidu.brpc.server.handler;
 
-import java.lang.reflect.InvocationTargetException;
-
 import com.baidu.brpc.Controller;
 import com.baidu.brpc.interceptor.DefaultInterceptorChain;
 import com.baidu.brpc.interceptor.InterceptorChain;
@@ -25,10 +23,10 @@ import com.baidu.brpc.protocol.Protocol;
 import com.baidu.brpc.protocol.Request;
 import com.baidu.brpc.protocol.Response;
 import com.baidu.brpc.server.RpcServer;
-
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
+import java.lang.reflect.InvocationTargetException;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -39,66 +37,69 @@ import lombok.extern.slf4j.Slf4j;
 @Getter
 @AllArgsConstructor
 public class ServerWorkTask implements Runnable {
-    private RpcServer rpcServer;
-    private Protocol protocol;
-    private Request request;
-    private Response response;
-    private ChannelHandlerContext ctx;
 
-    @Override
-    public void run() {
-        Controller controller = null;
-        if (request != null) {
-            request.setChannel(ctx.channel());
-            if (request.getRpcMethodInfo().isIncludeController()
-                    || request.getBinaryAttachment() != null
-                    || request.getKvAttachment() != null) {
-                controller = new Controller();
-                if (request.getBinaryAttachment() != null) {
-                    controller.setRequestBinaryAttachment(request.getBinaryAttachment());
-                }
-                if (request.getKvAttachment() != null) {
-                    controller.setRequestKvAttachment(request.getKvAttachment());
-                }
-                controller.setRemoteAddress(ctx.channel().remoteAddress());
-                request.setController(controller);
-            }
+  private RpcServer rpcServer;
+  private Protocol protocol;
+  private Request request;
+  private Response response;
+  private ChannelHandlerContext ctx;
 
-            response.setLogId(request.getLogId());
-            response.setCompressType(request.getCompressType());
-            response.setException(request.getException());
-            response.setRpcMethodInfo(request.getRpcMethodInfo());
+  @Override
+  public void run() {
+    Controller controller = null;
+    if (request != null) {
+      request.setChannel(ctx.channel());
+      if (request.getRpcMethodInfo().isIncludeController()
+          || request.getBinaryAttachment() != null
+          || request.getKvAttachment() != null) {
+        controller = new Controller();
+        if (request.getBinaryAttachment() != null) {
+          controller.setRequestBinaryAttachment(request.getBinaryAttachment());
         }
-
-        if (response.getException() == null) {
-            try {
-                InterceptorChain interceptorChain = new DefaultInterceptorChain(rpcServer.getInterceptors());
-                interceptorChain.intercept(request, response);
-                if (controller != null && controller.getResponseBinaryAttachment() != null
-                        && controller.getResponseBinaryAttachment().isReadable()) {
-                    response.setBinaryAttachment(controller.getResponseBinaryAttachment());
-                }
-            } catch (InvocationTargetException ex) {
-                Throwable targetException = ex.getTargetException();
-                if (targetException == null) {
-                    targetException = ex;
-                }
-                String errorMsg = String.format("invoke method failed, msg=%s", targetException.getMessage());
-                log.warn(errorMsg, targetException);
-                response.setException(targetException);
-            } catch (Throwable ex) {
-                String errorMsg = String.format("invoke method failed, msg=%s", ex.getMessage());
-                log.warn(errorMsg, ex);
-                response.setException(ex);
-            }
+        if (request.getKvAttachment() != null) {
+          controller.setRequestKvAttachment(request.getKvAttachment());
         }
+        controller.setRemoteAddress(ctx.channel().remoteAddress());
+        request.setController(controller);
+      }
 
-        try {
-            ByteBuf byteBuf = protocol.encodeResponse(request, response);
-            ChannelFuture channelFuture = ctx.channel().writeAndFlush(byteBuf);
-            protocol.afterResponseSent(request, response, channelFuture);
-        } catch (Exception ex) {
-            log.warn("send response failed:", ex);
-        }
+      response.setLogId(request.getLogId());
+      response.setCompressType(request.getCompressType());
+      response.setException(request.getException());
+      response.setRpcMethodInfo(request.getRpcMethodInfo());
     }
+
+    if (response.getException() == null) {
+      try {
+        InterceptorChain interceptorChain = new DefaultInterceptorChain(
+            rpcServer.getInterceptors());
+        interceptorChain.intercept(request, response);
+        if (controller != null && controller.getResponseBinaryAttachment() != null
+            && controller.getResponseBinaryAttachment().isReadable()) {
+          response.setBinaryAttachment(controller.getResponseBinaryAttachment());
+        }
+      } catch (InvocationTargetException ex) {
+        Throwable targetException = ex.getTargetException();
+        if (targetException == null) {
+          targetException = ex;
+        }
+        String errorMsg = String
+            .format("invoke method failed, msg=%s", targetException.getMessage());
+        log.warn(errorMsg, targetException);
+        response.setException(targetException);
+      } catch (Throwable ex) {
+        String errorMsg = String.format("invoke method failed, msg=%s", ex.getMessage());
+        log.warn(errorMsg, ex);
+        response.setException(ex);
+      }
+    }
+
+    try {
+      ByteBuf byteBuf = protocol.encodeResponse(request, response);
+      ChannelFuture channelFuture = ctx.channel().writeAndFlush(byteBuf);
+      protocol.afterResponseSent(request, response, channelFuture);
+    } catch (Exception ex) {
+      log.warn("send response failed:", ex);
+    }
+  }
 }

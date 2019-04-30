@@ -28,35 +28,35 @@ import io.netty.channel.nio.NioEventLoopGroup;
 
 public class BrpcIoThreadPoolInstance {
 
-    private static volatile EventLoopGroup ioThreadPool;
+  private static volatile EventLoopGroup ioThreadPool;
 
-    private BrpcIoThreadPoolInstance() {
+  private BrpcIoThreadPoolInstance() {
 
-    }
+  }
 
-    /**
-     * threadNum only works when thread pool instance create in the first time
-     */
-    public static EventLoopGroup getOrCreateInstance(int threadNum) {
+  /**
+   * threadNum only works when thread pool instance create in the first time
+   */
+  public static EventLoopGroup getOrCreateInstance(int threadNum) {
 
+    if (ioThreadPool == null) {
+      synchronized (BrpcIoThreadPoolInstance.class) {
         if (ioThreadPool == null) {
-            synchronized (BrpcIoThreadPoolInstance.class) {
-                if (ioThreadPool == null) {
-                    if (Epoll.isAvailable()) {
-                        ioThreadPool = new EpollEventLoopGroup(threadNum,
-                                new CustomThreadFactory("brpc-io-thread"));
-                    } else {
-                        ioThreadPool = new NioEventLoopGroup(threadNum,
-                                new CustomThreadFactory("brpc-io-thread"));
-                    }
-                }
-            }
+          if (Epoll.isAvailable()) {
+            ioThreadPool = new EpollEventLoopGroup(threadNum,
+                new CustomThreadFactory("brpc-io-thread"));
+          } else {
+            ioThreadPool = new NioEventLoopGroup(threadNum,
+                new CustomThreadFactory("brpc-io-thread"));
+          }
         }
-
-        return ioThreadPool;
+      }
     }
 
-    public static EventLoopGroup getInstance() {
-        return ioThreadPool;
-    }
+    return ioThreadPool;
+  }
+
+  public static EventLoopGroup getInstance() {
+    return ioThreadPool;
+  }
 }

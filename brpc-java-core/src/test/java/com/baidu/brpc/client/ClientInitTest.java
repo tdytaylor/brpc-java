@@ -18,109 +18,108 @@ package com.baidu.brpc.client;
 
 import static org.junit.Assert.assertEquals;
 
-import java.util.Map;
-
-import org.junit.Assert;
-import org.junit.Test;
-
 import com.baidu.brpc.client.instance.Endpoint;
 import com.baidu.brpc.protocol.standard.Echo;
 import com.baidu.brpc.protocol.standard.EchoService;
 import com.baidu.brpc.protocol.standard.EchoServiceImpl;
 import com.baidu.brpc.server.RpcServer;
-
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.Assert;
+import org.junit.Test;
 
 @Slf4j
 public class ClientInitTest {
 
 
-    @Test
-    public void testClientInit() {
+  @Test
+  public void testClientInit() {
 
-        RpcServer rpcServer = new RpcServer(8000);
-        rpcServer.registerService(new EchoServiceImpl());
-        rpcServer.start();
+    RpcServer rpcServer = new RpcServer(8000);
+    rpcServer.registerService(new EchoServiceImpl());
+    rpcServer.start();
 
-        // new first rpc client
-        long firstStartTime = System.currentTimeMillis();
-        RpcClient firstRpcClient = new RpcClient("list://127.0.0.1:8000");
-        long firstEndTime = System.currentTimeMillis();
+    // new first rpc client
+    long firstStartTime = System.currentTimeMillis();
+    RpcClient firstRpcClient = new RpcClient("list://127.0.0.1:8000");
+    long firstEndTime = System.currentTimeMillis();
 
-        EchoService echoService = BrpcProxy.getProxy(firstRpcClient, EchoService.class);
-        Echo.EchoRequest request = Echo.EchoRequest.newBuilder().setMessage("hello").build();
-        Echo.EchoResponse response = echoService.echo(request);
-        assertEquals("hello", response.getMessage());
-        log.info("first new rpcClient cost : {}", firstEndTime - firstStartTime);
-        firstRpcClient.stop();
+    EchoService echoService = BrpcProxy.getProxy(firstRpcClient, EchoService.class);
+    Echo.EchoRequest request = Echo.EchoRequest.newBuilder().setMessage("hello").build();
+    Echo.EchoResponse response = echoService.echo(request);
+    assertEquals("hello", response.getMessage());
+    log.info("first new rpcClient cost : {}", firstEndTime - firstStartTime);
+    firstRpcClient.stop();
 
-        // new second rpc client
-        long secondStartTime = System.currentTimeMillis();
-        RpcClient secondRpcClient = new RpcClient("list://127.0.0.1:8000");
-        long secondEndTime = System.currentTimeMillis();
-        log.info("second new rpcClient cost : {}", secondEndTime - secondStartTime);
-        echoService = BrpcProxy.getProxy(secondRpcClient, EchoService.class);
-        request = Echo.EchoRequest.newBuilder().setMessage("hello").build();
-        response = echoService.echo(request);
-        assertEquals("hello", response.getMessage());
-        secondRpcClient.stop();
+    // new second rpc client
+    long secondStartTime = System.currentTimeMillis();
+    RpcClient secondRpcClient = new RpcClient("list://127.0.0.1:8000");
+    long secondEndTime = System.currentTimeMillis();
+    log.info("second new rpcClient cost : {}", secondEndTime - secondStartTime);
+    echoService = BrpcProxy.getProxy(secondRpcClient, EchoService.class);
+    request = Echo.EchoRequest.newBuilder().setMessage("hello").build();
+    response = echoService.echo(request);
+    assertEquals("hello", response.getMessage());
+    secondRpcClient.stop();
 
-        // new third rpc client for short connection
-        Endpoint endPoint = new Endpoint("127.0.0.1", 8000);
-        long thirdStartTime = System.currentTimeMillis();
-        RpcClient thirdConnectionRpcClient = new RpcClient(endPoint);
-        long thirdEndTime = System.currentTimeMillis();
-        log.info("third new rpcClient cost : {}", thirdEndTime - thirdStartTime);
-        thirdConnectionRpcClient.stop();
+    // new third rpc client for short connection
+    Endpoint endPoint = new Endpoint("127.0.0.1", 8000);
+    long thirdStartTime = System.currentTimeMillis();
+    RpcClient thirdConnectionRpcClient = new RpcClient(endPoint);
+    long thirdEndTime = System.currentTimeMillis();
+    log.info("third new rpcClient cost : {}", thirdEndTime - thirdStartTime);
+    thirdConnectionRpcClient.stop();
 
-        ThreadNumStat stat = calThreadNum();
-        int processors = Runtime.getRuntime().availableProcessors();
+    ThreadNumStat stat = calThreadNum();
+    int processors = Runtime.getRuntime().availableProcessors();
 
-        Assert.assertEquals(processors, stat.ioThreadNum);
-        Assert.assertEquals(processors, stat.workThreadNum);
-        Assert.assertEquals(1, stat.timoutThreadNum);
+    Assert.assertEquals(processors, stat.ioThreadNum);
+    Assert.assertEquals(processors, stat.workThreadNum);
+    Assert.assertEquals(1, stat.timoutThreadNum);
 
-        rpcServer.shutdown();
+    rpcServer.shutdown();
+  }
+
+
+  private ThreadNumStat calThreadNum() {
+    ThreadNumStat stat = new ThreadNumStat();
+
+    // stat all thread
+    Map<Thread, StackTraceElement[]> allThreadMap = Thread.getAllStackTraces();
+    for (Map.Entry<Thread, StackTraceElement[]> entry : allThreadMap.entrySet()) {
+
+      Thread thread = entry.getKey();
+
+      if (thread.getName().contains("invalid-channel-callback-thread")) {
+        stat.callBackThreadNum++;
+      } else if (thread.getName().contains("brpc-io-thread")) {
+        stat.ioThreadNum++;
+      } else if (thread.getName().contains("brpc-work-thread")) {
+        stat.workThreadNum++;
+      } else if (thread.getName().contains("health-check-timer-thread")) {
+        stat.healthCheckThreadNum++;
+      } else if (thread.getName().contains("timeout-timer-thread")) {
+        stat.timoutThreadNum++;
+      }
     }
 
+    log.info(
+        "thread statistic data, callBackThreadNum : {}, \n ioThreadNum : {}, \n workThreadNum : {}, \n"
+            + " healthCheckThreadNum : {}, \n timeoutThreadNum : {} \n", stat.callBackThreadNum,
+        stat.ioThreadNum, stat.workThreadNum, stat.healthCheckThreadNum, stat.timoutThreadNum);
 
-    private ThreadNumStat calThreadNum() {
-        ThreadNumStat stat = new ThreadNumStat();
-
-        // stat all thread
-        Map<Thread, StackTraceElement[]> allThreadMap = Thread.getAllStackTraces();
-        for (Map.Entry<Thread, StackTraceElement[]> entry : allThreadMap.entrySet()) {
-
-            Thread thread = entry.getKey();
-
-            if (thread.getName().contains("invalid-channel-callback-thread")) {
-                stat.callBackThreadNum ++;
-            } else if (thread.getName().contains("brpc-io-thread")) {
-                stat.ioThreadNum ++;
-            } else if (thread.getName().contains("brpc-work-thread")) {
-                stat.workThreadNum ++;
-            } else if (thread.getName().contains("health-check-timer-thread")) {
-                stat.healthCheckThreadNum ++;
-            } else if (thread.getName().contains("timeout-timer-thread")) {
-                stat.timoutThreadNum ++;
-            }
-        }
-
-        log.info("thread statistic data, callBackThreadNum : {}, \n ioThreadNum : {}, \n workThreadNum : {}, \n"
-                        + " healthCheckThreadNum : {}, \n timeoutThreadNum : {} \n", stat.callBackThreadNum,
-                stat.ioThreadNum, stat.workThreadNum, stat.healthCheckThreadNum, stat.timoutThreadNum);
-
-        return stat;
-    }
+    return stat;
+  }
 
 
-    public static class ThreadNumStat {
-        public int callBackThreadNum;
-        public int ioThreadNum;
-        public int workThreadNum;
-        public int healthCheckThreadNum;
-        public int timoutThreadNum;
-    }
+  public static class ThreadNumStat {
+
+    public int callBackThreadNum;
+    public int ioThreadNum;
+    public int workThreadNum;
+    public int healthCheckThreadNum;
+    public int timoutThreadNum;
+  }
 
 
 }

@@ -1,4 +1,4 @@
-syntax="proto2";
+syntax = "proto2";
 // Meta of sofa-pbrpc https://github.com/baidu/sofa-pbrpc
 
 package brpc.policy;
@@ -6,11 +6,11 @@ option java_package = "com.baidu.brpc.protocol.sofa";
 option java_outer_classname = "SofaRpcProto";
 
 enum SofaCompressType {
-    SOFA_COMPRESS_TYPE_NONE = 0;
-    SOFA_COMPRESS_TYPE_GZIP = 1;
-    SOFA_COMPRESS_TYPE_ZLIB = 2;
-    SOFA_COMPRESS_TYPE_SNAPPY = 3;
-    SOFA_COMPRESS_TYPE_LZ4 = 4;
+  SOFA_COMPRESS_TYPE_NONE = 0;
+  SOFA_COMPRESS_TYPE_GZIP = 1;
+  SOFA_COMPRESS_TYPE_ZLIB = 2;
+  SOFA_COMPRESS_TYPE_SNAPPY = 3;
+  SOFA_COMPRESS_TYPE_LZ4 = 4;
 }
 
 message SofaRpcMeta {

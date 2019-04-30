@@ -19,41 +19,46 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class LoadBalanceManager {
-    private static volatile LoadBalanceManager instance;
-    private Map<Integer, LoadBalanceFactory> loadBalanceFactoryMap;
 
-    public static LoadBalanceManager getInstance() {
+  private static volatile LoadBalanceManager instance;
+  private Map<Integer, LoadBalanceFactory> loadBalanceFactoryMap;
+
+  private LoadBalanceManager() {
+    loadBalanceFactoryMap = new HashMap<Integer, LoadBalanceFactory>();
+    loadBalanceFactoryMap
+        .put(LoadBalanceStrategy.LOAD_BALANCE_RANDOM, new DefaultLoadBalanceFactory());
+    loadBalanceFactoryMap
+        .put(LoadBalanceStrategy.LOAD_BALANCE_ROUND_ROBIN, new DefaultLoadBalanceFactory());
+    loadBalanceFactoryMap
+        .put(LoadBalanceStrategy.LOAD_BALANCE_WEIGHT, new DefaultLoadBalanceFactory());
+    loadBalanceFactoryMap
+        .put(LoadBalanceStrategy.LOAD_BALANCE_FAIR, new DefaultLoadBalanceFactory());
+  }
+
+  public static LoadBalanceManager getInstance() {
+    if (instance == null) {
+      synchronized (LoadBalanceManager.class) {
         if (instance == null) {
-            synchronized(LoadBalanceManager.class) {
-                if (instance == null) {
-                    instance = new LoadBalanceManager();
-                }
-            }
+          instance = new LoadBalanceManager();
         }
-        return instance;
+      }
     }
+    return instance;
+  }
 
-    private LoadBalanceManager() {
-        loadBalanceFactoryMap = new HashMap<Integer, LoadBalanceFactory>();
-        loadBalanceFactoryMap.put(LoadBalanceStrategy.LOAD_BALANCE_RANDOM, new DefaultLoadBalanceFactory());
-        loadBalanceFactoryMap.put(LoadBalanceStrategy.LOAD_BALANCE_ROUND_ROBIN, new DefaultLoadBalanceFactory());
-        loadBalanceFactoryMap.put(LoadBalanceStrategy.LOAD_BALANCE_WEIGHT, new DefaultLoadBalanceFactory());
-        loadBalanceFactoryMap.put(LoadBalanceStrategy.LOAD_BALANCE_FAIR, new DefaultLoadBalanceFactory());
-    }
+  public void registerLoadBalanceFactory(Integer loadBalanceType, LoadBalanceFactory factory) {
+    loadBalanceFactoryMap.put(loadBalanceType, factory);
+  }
 
-    public void registerLoadBalanceFactory(Integer loadBalanceType, LoadBalanceFactory factory) {
-        loadBalanceFactoryMap.put(loadBalanceType, factory);
-    }
+  public LoadBalanceFactory getLoadBalanceFactory(Integer loadBalanceType) {
+    return loadBalanceFactoryMap.get(loadBalanceType);
+  }
 
-    public LoadBalanceFactory getLoadBalanceFactory(Integer loadBalanceType) {
-        return loadBalanceFactoryMap.get(loadBalanceType);
+  public LoadBalanceStrategy createLoadBalance(Integer loadBalanceType) {
+    LoadBalanceFactory factory = loadBalanceFactoryMap.get(loadBalanceType);
+    if (factory == null) {
+      throw new IllegalArgumentException("load balance not exist:" + loadBalanceType);
     }
-
-    public LoadBalanceStrategy createLoadBalance(Integer loadBalanceType) {
-        LoadBalanceFactory factory = loadBalanceFactoryMap.get(loadBalanceType);
-        if (factory == null) {
-            throw new IllegalArgumentException("load balance not exist:" + loadBalanceType);
-        }
-        return factory.createLoadBalance(loadBalanceType);
-    }
+    return factory.createLoadBalance(loadBalanceType);
+  }
 }

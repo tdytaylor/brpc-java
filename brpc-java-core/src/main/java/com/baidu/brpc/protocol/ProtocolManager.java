@@ -21,86 +21,85 @@ import com.baidu.brpc.protocol.hulu.HuluRpcProtocol;
 import com.baidu.brpc.protocol.nshead.NSHeadRpcProtocol;
 import com.baidu.brpc.protocol.sofa.SofaRpcProtocol;
 import com.baidu.brpc.protocol.standard.BaiduRpcProtocol;
-
-import java.util.List;
 import java.util.ArrayList;
-import java.util.Map;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Created by huwenwei on 2017/9/23.
  */
 public class ProtocolManager {
-    private Map<Integer, Protocol> protocolMap;
-    private List<Protocol> protocols;
-    private int protocolNum;
 
-    private static ProtocolManager instance;
-    private boolean isInit;
+  private static ProtocolManager instance;
+  private Map<Integer, Protocol> protocolMap;
+  private List<Protocol> protocols;
+  private int protocolNum;
+  private boolean isInit;
 
-    /**
-     * no need to be thread safe, since it is called when bootstrap
-     */
-    public static ProtocolManager instance() {
-        if (instance == null) {
-            instance = new ProtocolManager();
-        }
-        return instance;
+  private ProtocolManager() {
+
+  }
+
+  /**
+   * no need to be thread safe, since it is called when bootstrap
+   */
+  public static ProtocolManager instance() {
+    if (instance == null) {
+      instance = new ProtocolManager();
     }
+    return instance;
+  }
 
-    private ProtocolManager() {
-
+  public ProtocolManager init(String encoding) {
+    if (!isInit) {
+      protocolMap = new HashMap<Integer, Protocol>(64);
+      protocols = new ArrayList<Protocol>(64);
+      protocolMap.put(Options.ProtocolType.PROTOCOL_BAIDU_STD_VALUE, new BaiduRpcProtocol());
+      protocolMap.put(Options.ProtocolType.PROTOCOL_SOFA_PBRPC_VALUE, new SofaRpcProtocol());
+      protocolMap.put(Options.ProtocolType.PROTOCOL_HULU_PBRPC_VALUE, new HuluRpcProtocol());
+      protocolMap.put(Options.ProtocolType.PROTOCOL_HTTP_JSON_VALUE,
+          new HttpRpcProtocol(Options.ProtocolType.PROTOCOL_HTTP_JSON_VALUE, encoding));
+      protocolMap.put(Options.ProtocolType.PROTOCOL_HTTP_PROTOBUF_VALUE,
+          new HttpRpcProtocol(Options.ProtocolType.PROTOCOL_HTTP_PROTOBUF_VALUE, encoding));
+      protocolMap.put(Options.ProtocolType.PROTOCOL_NSHEAD_PROTOBUF_VALUE,
+          new NSHeadRpcProtocol(Options.ProtocolType.PROTOCOL_NSHEAD_PROTOBUF_VALUE, encoding));
+      protocolMap.put(Options.ProtocolType.PROTOCOL_NSHEAD_JSON_VALUE,
+          new NSHeadRpcProtocol(Options.ProtocolType.PROTOCOL_NSHEAD_JSON_VALUE, encoding));
+      protocols.addAll(protocolMap.values());
+      protocolNum = protocols.size();
+      isInit = true;
     }
+    return this;
+  }
 
-    public ProtocolManager init(String encoding) {
-        if (!isInit) {
-            protocolMap = new HashMap<Integer, Protocol>(64);
-            protocols = new ArrayList<Protocol>(64);
-            protocolMap.put(Options.ProtocolType.PROTOCOL_BAIDU_STD_VALUE, new BaiduRpcProtocol());
-            protocolMap.put(Options.ProtocolType.PROTOCOL_SOFA_PBRPC_VALUE, new SofaRpcProtocol());
-            protocolMap.put(Options.ProtocolType.PROTOCOL_HULU_PBRPC_VALUE, new HuluRpcProtocol());
-            protocolMap.put(Options.ProtocolType.PROTOCOL_HTTP_JSON_VALUE,
-                    new HttpRpcProtocol(Options.ProtocolType.PROTOCOL_HTTP_JSON_VALUE, encoding));
-            protocolMap.put(Options.ProtocolType.PROTOCOL_HTTP_PROTOBUF_VALUE,
-                    new HttpRpcProtocol(Options.ProtocolType.PROTOCOL_HTTP_PROTOBUF_VALUE, encoding));
-            protocolMap.put(Options.ProtocolType.PROTOCOL_NSHEAD_PROTOBUF_VALUE,
-                    new NSHeadRpcProtocol(Options.ProtocolType.PROTOCOL_NSHEAD_PROTOBUF_VALUE, encoding));
-            protocolMap.put(Options.ProtocolType.PROTOCOL_NSHEAD_JSON_VALUE,
-                    new NSHeadRpcProtocol(Options.ProtocolType.PROTOCOL_NSHEAD_JSON_VALUE, encoding));
-            protocols.addAll(protocolMap.values());
-            protocolNum = protocols.size();
-            isInit = true;
-        }
-        return this;
+  // application can register custom protocol
+  public void registerProtocol(Integer protocolType, Protocol protocol) {
+    if (protocolMap.get(protocolType) != null) {
+      throw new RuntimeException("protocol exist, type=" + protocolType);
     }
+    protocolMap.put(protocolType, protocol);
+    protocols.add(protocol);
+    protocolNum++;
+  }
 
-    // application can register custom protocol
-    public void registerProtocol(Integer protocolType, Protocol protocol) {
-        if (protocolMap.get(protocolType) != null) {
-            throw new RuntimeException("protocol exist, type=" + protocolType);
-        }
-        protocolMap.put(protocolType, protocol);
-        protocols.add(protocol);
-        protocolNum++;
+  public Protocol getProtocol(Integer protocolType) {
+    Protocol protocol = protocolMap.get(protocolType);
+    if (protocol == null) {
+      throw new RuntimeException("protocol not exist, type=" + protocolType);
     }
+    return protocol;
+  }
 
-    public Protocol getProtocol(Integer protocolType) {
-        Protocol protocol = protocolMap.get(protocolType);
-        if (protocol == null) {
-            throw new RuntimeException("protocol not exist, type=" + protocolType);
-        }
-        return protocol;
-    }
+  public Map<Integer, Protocol> getProtocolMap() {
+    return protocolMap;
+  }
 
-    public Map<Integer, Protocol> getProtocolMap() {
-        return protocolMap;
-    }
+  public List<Protocol> getProtocols() {
+    return protocols;
+  }
 
-    public List<Protocol> getProtocols() {
-        return protocols;
-    }
-
-    public int getProtocolNum() {
-        return protocolNum;
-    }
+  public int getProtocolNum() {
+    return protocolNum;
+  }
 }

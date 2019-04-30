@@ -17,5 +17,6 @@
 package com.baidu.brpc.naming;
 
 public interface NamingServiceFactory {
-    NamingService createNamingService(BrpcURL url);
+
+  NamingService createNamingService(BrpcURL url);
 }

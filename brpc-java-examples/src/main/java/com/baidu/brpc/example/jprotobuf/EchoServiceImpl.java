@@ -20,11 +20,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class EchoServiceImpl implements EchoService {
-    private static final Logger LOG = LoggerFactory.getLogger(EchoServiceImpl.class);
 
-    @Override
-    public EchoResponse echo(EchoRequest request) {
-        // 读取request attachment
+  private static final Logger LOG = LoggerFactory.getLogger(EchoServiceImpl.class);
+
+  @Override
+  public EchoResponse echo(EchoRequest request) {
+    // 读取request attachment
 //        RpcContext rpcContext = RpcContext.getContext();
 //        ByteBuf attachment = rpcContext.getRequestBinaryAttachment();
 //        if (attachment != null) {
@@ -36,11 +37,11 @@ public class EchoServiceImpl implements EchoService {
 //            rpcContext.setResponseBinaryAttachment(Unpooled.copiedBuffer(attachment));
 //        }
 
-        String message = request.getMessage();
-        EchoResponse response = new EchoResponse();
-        response.setMessage(message);
-        LOG.debug("EchoService.echo, request={}, response={}",
-                request.getMessage(), response.getMessage());
-        return response;
-    }
+    String message = request.getMessage();
+    EchoResponse response = new EchoResponse();
+    response.setMessage(message);
+    LOG.debug("EchoService.echo, request={}, response={}",
+        request.getMessage(), response.getMessage());
+    return response;
+  }
 }

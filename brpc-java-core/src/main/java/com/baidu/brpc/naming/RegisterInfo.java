@@ -21,7 +21,7 @@ import lombok.Setter;
 
 /**
  * POJO class of register info.
- * 
+ *
  * @author xiemalin
  */
 @Setter
@@ -29,12 +29,18 @@ import lombok.Setter;
 @EqualsAndHashCode
 public class RegisterInfo extends NamingOptions {
 
-    /** host info. */
-    private String host;
+  /**
+   * host info.
+   */
+  private String host;
 
-    /** The port. */
-    private int port;
+  /**
+   * The port.
+   */
+  private int port;
 
-    /** the interface class name. */
-    private String service;
+  /**
+   * the interface class name.
+   */
+  private String service;
 }

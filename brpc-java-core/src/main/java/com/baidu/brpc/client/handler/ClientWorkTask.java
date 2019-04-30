@@ -20,7 +20,6 @@ import com.baidu.brpc.client.RpcClient;
 import com.baidu.brpc.client.RpcFuture;
 import com.baidu.brpc.protocol.Protocol;
 import com.baidu.brpc.protocol.Response;
-
 import io.netty.channel.ChannelHandlerContext;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -32,28 +31,29 @@ import lombok.extern.slf4j.Slf4j;
 @Getter
 @AllArgsConstructor
 public class ClientWorkTask implements Runnable {
-    private RpcClient rpcClient;
-    private Object packet;
-    private Protocol protocol;
-    private ChannelHandlerContext ctx;
 
-    @Override
-    public void run() {
-        Response response;
+  private RpcClient rpcClient;
+  private Object packet;
+  private Protocol protocol;
+  private ChannelHandlerContext ctx;
 
-        try {
-            response = protocol.decodeResponse(packet, ctx);
-        } catch (Exception e) {
-            log.warn("decode response failed:", e);
-            return;
-        }
+  @Override
+  public void run() {
+    Response response;
 
-        if (response.getRpcFuture() != null) {
-            log.debug("handle response, logId={}", response.getLogId());
-            RpcFuture future = response.getRpcFuture();
-            future.handleResponse(response);
-        } else {
-            log.debug("rpcFuture is null, logId={}", response.getLogId());
-        }
+    try {
+      response = protocol.decodeResponse(packet, ctx);
+    } catch (Exception e) {
+      log.warn("decode response failed:", e);
+      return;
     }
+
+    if (response.getRpcFuture() != null) {
+      log.debug("handle response, logId={}", response.getLogId());
+      RpcFuture future = response.getRpcFuture();
+      future.handleResponse(response);
+    } else {
+      log.debug("rpcFuture is null, logId={}", response.getLogId());
+    }
+  }
 }

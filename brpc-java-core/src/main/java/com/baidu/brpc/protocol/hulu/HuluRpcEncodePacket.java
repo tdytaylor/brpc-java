@@ -23,8 +23,9 @@ import lombok.Setter;
 @Setter
 @Getter
 public class HuluRpcEncodePacket {
-    private HuluRpcProto.HuluRpcRequestMeta requestMeta;
-    private HuluRpcProto.HuluRpcResponseMeta responseMeta;
-    private ByteBuf proto;
-    private ByteBuf attachment;
+
+  private HuluRpcProto.HuluRpcRequestMeta requestMeta;
+  private HuluRpcProto.HuluRpcResponseMeta responseMeta;
+  private ByteBuf proto;
+  private ByteBuf attachment;
 }

@@ -24,7 +24,6 @@ import com.baidu.brpc.client.channel.ChannelType;
 import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.protocol.Protocol;
 import com.baidu.brpc.protocol.Response;
-
 import io.netty.channel.Channel;
 import io.netty.util.Attribute;
 import io.netty.util.AttributeKey;
@@ -36,175 +35,175 @@ import lombok.extern.slf4j.Slf4j;
 @Getter
 @Slf4j
 public class ChannelInfo {
-    private static final AttributeKey<ChannelInfo> CLIENT_CHANNEL_KEY = AttributeKey.valueOf("client_key");
-    private static final AttributeKey<ChannelInfo> SERVER_CHANNEL_KEY = AttributeKey.valueOf("server_key");
 
-    private Channel channel;
-    private BrpcChannel channelGroup;
-    // 是否来自于业务RpcContext手动设置的
-    private boolean fromRpcContext = false;
-    private Protocol protocol;
-    private long logId;
-    private FastFutureStore pendingRpc;
-    private DynamicCompositeByteBuf recvBuf = new DynamicCompositeByteBuf(16);
+  private static final AttributeKey<ChannelInfo> CLIENT_CHANNEL_KEY = AttributeKey
+      .valueOf("client_key");
+  private static final AttributeKey<ChannelInfo> SERVER_CHANNEL_KEY = AttributeKey
+      .valueOf("server_key");
 
-    public void setProtocol(Protocol protocol) {
-        this.protocol = protocol;
+  private Channel channel;
+  private BrpcChannel channelGroup;
+  // 是否来自于业务RpcContext手动设置的
+  private boolean fromRpcContext = false;
+  private Protocol protocol;
+  private long logId;
+  private FastFutureStore pendingRpc;
+  private DynamicCompositeByteBuf recvBuf = new DynamicCompositeByteBuf(16);
+
+  protected ChannelInfo() {
+  }
+
+  public static ChannelInfo getOrCreateClientChannelInfo(Channel channel) {
+    Attribute<ChannelInfo> attribute = channel.attr(ChannelInfo.CLIENT_CHANNEL_KEY);
+    ChannelInfo channelInfo = attribute.get();
+    if (channelInfo == null) {
+      channelInfo = new ChannelInfo();
+      // 此时FastFutureStore单例对象已经在RpcClient创建时初始化过了
+      channelInfo.setPendingRpc(FastFutureStore.getInstance(0));
+      channelInfo.setChannel(channel);
+      attribute.set(channelInfo);
+    }
+    return channelInfo;
+  }
+
+  public static ChannelInfo getClientChannelInfo(Channel channel) {
+    Attribute<ChannelInfo> attribute = channel.attr(ChannelInfo.CLIENT_CHANNEL_KEY);
+    ChannelInfo channelInfo = attribute.get();
+    return channelInfo;
+  }
+
+  public static ChannelInfo getOrCreateServerChannelInfo(Channel channel) {
+    Attribute<ChannelInfo> attribute = channel.attr(ChannelInfo.SERVER_CHANNEL_KEY);
+    ChannelInfo channelInfo = attribute.get();
+    if (channelInfo == null) {
+      channelInfo = new ChannelInfo();
+      channelInfo.setChannel(channel);
+      attribute.set(channelInfo);
+    }
+    return channelInfo;
+  }
+
+  public static ChannelInfo getServerChannelInfo(Channel channel) {
+    Attribute<ChannelInfo> attribute = channel.attr(ChannelInfo.SERVER_CHANNEL_KEY);
+    ChannelInfo channelInfo = attribute.get();
+    return channelInfo;
+  }
+
+  public void setProtocol(Protocol protocol) {
+    this.protocol = protocol;
+  }
+
+  public long addRpcFuture(RpcFuture future) {
+    // FastFutureStore会保证返回的logId不会占用已经使用过的slot
+    return pendingRpc.put(future);
+  }
+
+  public RpcFuture getRpcFuture(long logId) {
+    return pendingRpc.get(logId);
+  }
+
+  public RpcFuture removeRpcFuture(long logId) {
+    return pendingRpc.getAndRemove(logId);
+  }
+
+  /**
+   * return channel when fail
+   */
+  public void handleRequestFail(ChannelType channelType) {
+    if (channelType != ChannelType.SHORT_CONNECTION) {
+      channelGroup.incFailedNum();
+      returnChannelAfterRequest();
+    } else {
+      channelGroup.close();
     }
 
-    public static ChannelInfo getOrCreateClientChannelInfo(Channel channel) {
-        Attribute<ChannelInfo> attribute = channel.attr(ChannelInfo.CLIENT_CHANNEL_KEY);
-        ChannelInfo channelInfo = attribute.get();
-        if (channelInfo == null) {
-            channelInfo = new ChannelInfo();
-            // 此时FastFutureStore单例对象已经在RpcClient创建时初始化过了
-            channelInfo.setPendingRpc(FastFutureStore.getInstance(0));
-            channelInfo.setChannel(channel);
-            attribute.set(channelInfo);
-        }
-        return channelInfo;
+  }
+
+  /**
+   * return channel when success
+   */
+  public void handleRequestSuccess() {
+    returnChannelAfterRequest();
+  }
+
+  private void returnChannelAfterRequest() {
+    if (isFromRpcContext()) {
+      return;
+    }
+    if (protocol.returnChannelBeforeResponse()) {
+      channelGroup.returnChannel(channel);
+    }
+  }
+
+  /**
+   * return channel when fail
+   */
+  public void handleResponseFail() {
+    channelGroup.incFailedNum();
+    returnChannelAfterResponse();
+  }
+
+  /**
+   * return channel when success
+   */
+  public void handleResponseSuccess() {
+    returnChannelAfterResponse();
+  }
+
+  private void returnChannelAfterResponse() {
+    if (isFromRpcContext()) {
+      return;
+    }
+    if (!protocol.returnChannelBeforeResponse()) {
+      channelGroup.returnChannel(channel);
+    }
+  }
+
+  /**
+   * channel不可用时或者handler出现异常时处理逻辑
+   */
+  public void handleChannelException(RpcException ex) {
+    if (isFromRpcContext()) {
+      return;
+    }
+    if (channelGroup != null) {
+      channelGroup.removeChannel(channel);
+    }
+    // 遍历并删除当前channel下所有RpcFuture
+    pendingRpc.traverse(new ChannelErrorStoreWalker(channel, ex));
+  }
+
+  /**
+   * 用于遍历FutureStore元素的实现类
+   */
+  private static class ChannelErrorStoreWalker implements FastFutureStore.StoreWalker {
+
+    private Channel currentChannel;
+    private RpcException exception;
+
+    public ChannelErrorStoreWalker(Channel currentChannel, RpcException exception) {
+      this.currentChannel = currentChannel;
+      this.exception = exception;
     }
 
-    public static ChannelInfo getClientChannelInfo(Channel channel) {
-        Attribute<ChannelInfo> attribute = channel.attr(ChannelInfo.CLIENT_CHANNEL_KEY);
-        ChannelInfo channelInfo = attribute.get();
-        return channelInfo;
+    @Override
+    public boolean visitElement(RpcFuture fut) {
+      // 与当前channel相同则删除
+      ChannelInfo chanInfo = fut.getChannelInfo();
+      if (null == chanInfo) {
+        return true;
+      }
+
+      return currentChannel != chanInfo.channel;
+
+      // 不删除返回true
     }
 
-    public static ChannelInfo getOrCreateServerChannelInfo(Channel channel) {
-        Attribute<ChannelInfo> attribute = channel.attr(ChannelInfo.SERVER_CHANNEL_KEY);
-        ChannelInfo channelInfo = attribute.get();
-        if (channelInfo == null) {
-            channelInfo = new ChannelInfo();
-            channelInfo.setChannel(channel);
-            attribute.set(channelInfo);
-        }
-        return channelInfo;
+    @Override
+    public void actionAfterDelete(RpcFuture fut) {
+      Response response = fut.getRpcClient().getProtocol().createResponse();
+      response.setException(exception);
+      fut.handleResponse(response);
     }
-
-    public static ChannelInfo getServerChannelInfo(Channel channel) {
-        Attribute<ChannelInfo> attribute = channel.attr(ChannelInfo.SERVER_CHANNEL_KEY);
-        ChannelInfo channelInfo = attribute.get();
-        return channelInfo;
-    }
-
-    public long addRpcFuture(RpcFuture future) {
-        // FastFutureStore会保证返回的logId不会占用已经使用过的slot
-        return pendingRpc.put(future);
-    }
-
-    public RpcFuture getRpcFuture(long logId) {
-        return pendingRpc.get(logId);
-    }
-
-    public RpcFuture removeRpcFuture(long logId) {
-        return pendingRpc.getAndRemove(logId);
-    }
-
-    /**
-     * return channel when fail
-     * @param channelType
-     */
-    public void handleRequestFail(ChannelType channelType) {
-        if (channelType != ChannelType.SHORT_CONNECTION) {
-            channelGroup.incFailedNum();
-            returnChannelAfterRequest();
-        } else {
-            channelGroup.close();
-        }
-
-    }
-
-    /**
-     * return channel when success
-     */
-    public void handleRequestSuccess() {
-        returnChannelAfterRequest();
-    }
-
-    private void returnChannelAfterRequest() {
-        if (isFromRpcContext()) {
-            return;
-        }
-        if (protocol.returnChannelBeforeResponse()) {
-            channelGroup.returnChannel(channel);
-        }
-    }
-
-    /**
-     * return channel when fail
-     */
-    public void handleResponseFail() {
-        channelGroup.incFailedNum();
-        returnChannelAfterResponse();
-    }
-
-    /**
-     * return channel when success
-     */
-    public void handleResponseSuccess() {
-        returnChannelAfterResponse();
-    }
-
-    private void returnChannelAfterResponse() {
-        if (isFromRpcContext()) {
-            return;
-        }
-        if (!protocol.returnChannelBeforeResponse()) {
-            channelGroup.returnChannel(channel);
-        }
-    }
-
-    /**
-     * channel不可用时或者handler出现异常时处理逻辑
-     */
-    public void handleChannelException(RpcException ex) {
-        if (isFromRpcContext()) {
-            return;
-        }
-        if (channelGroup != null) {
-            channelGroup.removeChannel(channel);
-        }
-        // 遍历并删除当前channel下所有RpcFuture
-        pendingRpc.traverse(new ChannelErrorStoreWalker(channel, ex));
-    }
-
-    protected ChannelInfo() {
-    }
-
-    /**
-     * 用于遍历FutureStore元素的实现类
-     */
-    private static class ChannelErrorStoreWalker implements FastFutureStore.StoreWalker {
-        private Channel currentChannel;
-        private RpcException exception;
-
-        public ChannelErrorStoreWalker(Channel currentChannel, RpcException exception) {
-            this.currentChannel = currentChannel;
-            this.exception = exception;
-        }
-
-        @Override
-        public boolean visitElement(RpcFuture fut) {
-            // 与当前channel相同则删除
-            ChannelInfo chanInfo = fut.getChannelInfo();
-            if (null == chanInfo) {
-                return true;
-            }
-
-            if (currentChannel == chanInfo.channel) {
-                return false;
-            }
-
-            // 不删除返回true
-            return true;
-        }
-
-        @Override
-        public void actionAfterDelete(RpcFuture fut) {
-            Response response = fut.getRpcClient().getProtocol().createResponse();
-            response.setException(exception);
-            fut.handleResponse(response);
-        }
-    }
+  }
 }

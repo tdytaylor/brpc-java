@@ -23,185 +23,185 @@ import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.protocol.Response;
 import com.baidu.brpc.utils.CollectionUtils;
 import io.netty.util.Timeout;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import lombok.Getter;
 import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-
 @SuppressWarnings("unchecked")
 @Setter
 @Getter
 public class RpcFuture<T> implements AsyncAwareFuture<T> {
-    private static final Logger LOG = LoggerFactory.getLogger(RpcFuture.class);
 
-    private CountDownLatch latch;
-    private Timeout timeout;
+  private static final Logger LOG = LoggerFactory.getLogger(RpcFuture.class);
 
-    private RpcCallback<T> callback;  // callback cannot be set after init
-    private ChannelInfo channelInfo;
-    private RpcClient rpcClient;
-    private RpcMethodInfo rpcMethodInfo;
-    private Controller controller;
+  private CountDownLatch latch;
+  private Timeout timeout;
 
-    private Response response;
-    private boolean isDone;
-    // record the time of request
-    // used in FAIR load balancing
-    private long startTime;
-    private long endTime;
+  private RpcCallback<T> callback;  // callback cannot be set after init
+  private ChannelInfo channelInfo;
+  private RpcClient rpcClient;
+  private RpcMethodInfo rpcMethodInfo;
+  private Controller controller;
 
-    private volatile long logId;
+  private Response response;
+  private boolean isDone;
+  // record the time of request
+  // used in FAIR load balancing
+  private long startTime;
+  private long endTime;
 
-    public RpcFuture() {
-        this.latch = new CountDownLatch(1);
-        this.startTime = System.currentTimeMillis();
+  private volatile long logId;
+
+  public RpcFuture() {
+    this.latch = new CountDownLatch(1);
+    this.startTime = System.currentTimeMillis();
+  }
+
+  public RpcFuture(long logId) {
+    this.logId = logId;
+    this.latch = new CountDownLatch(1);
+    this.startTime = System.currentTimeMillis();
+  }
+
+  public RpcFuture(Timeout timeout,
+      RpcMethodInfo rpcMethodInfo,
+      RpcCallback<T> callback,
+      ChannelInfo channelInfo,
+      RpcClient rpcClient) {
+    init(timeout, rpcMethodInfo, callback, channelInfo, rpcClient);
+  }
+
+  public void init(Timeout timeout,
+      RpcMethodInfo rpcMethodInfo,
+      RpcCallback<T> callback,
+      ChannelInfo channelInfo,
+      RpcClient rpcClient) {
+    this.timeout = timeout;
+    this.rpcMethodInfo = rpcMethodInfo;
+    this.callback = callback;
+    this.channelInfo = channelInfo;
+    this.latch = new CountDownLatch(1);
+    this.startTime = System.currentTimeMillis();
+    this.rpcClient = rpcClient;
+  }
+
+  public void handleConnection(Response response) {
+    this.response = response;
+    this.endTime = System.currentTimeMillis();
+
+    // only long connection need to update channel group
+    if (rpcClient.isLongConnection()) {
+      if (response != null && response.getResult() != null) {
+        channelInfo.getChannelGroup().updateLatency((int) (endTime - startTime));
+        channelInfo.handleResponseSuccess();
+      } else {
+        channelInfo.getChannelGroup().updateLatencyWithReadTimeOut();
+        channelInfo.handleResponseFail();
+      }
+    } else {
+      channelInfo.getChannelGroup().close();
     }
 
-    public RpcFuture(long logId) {
-        this.logId = logId;
-        this.latch = new CountDownLatch(1);
-        this.startTime = System.currentTimeMillis();
+    timeout.cancel();
+    latch.countDown();
+    isDone = true;
+  }
+
+  public void handleResponse(Response response) {
+    handleConnection(response);
+    if (response != null) {
+      if (response.getBinaryAttachment() != null) {
+        if (controller == null) {
+          LOG.error("controller can not be null when attachment exist");
+          controller = new Controller();
+        }
+        controller.setResponseBinaryAttachment(response.getBinaryAttachment());
+      }
+      if (response.getKvAttachment() != null) {
+        if (controller == null) {
+          LOG.error("controller can not be null when attachment exist");
+          controller = new Controller();
+        }
+        controller.setResponseKvAttachment(response.getKvAttachment());
+      }
     }
 
-    public RpcFuture(Timeout timeout,
-                     RpcMethodInfo rpcMethodInfo,
-                     RpcCallback<T> callback,
-                     ChannelInfo channelInfo,
-                     RpcClient rpcClient) {
-        init(timeout, rpcMethodInfo, callback, channelInfo, rpcClient);
+    // invoke the chain of interceptors when async scene
+    if (isAsync() && CollectionUtils.isNotEmpty(rpcClient.getInterceptors())) {
+      int length = rpcClient.getInterceptors().size();
+      for (int i = length - 1; i >= 0; i--) {
+        rpcClient.getInterceptors().get(i).handleResponse(response);
+      }
     }
 
-    public void init(Timeout timeout,
-                     RpcMethodInfo rpcMethodInfo,
-                     RpcCallback<T> callback,
-                     ChannelInfo channelInfo,
-                     RpcClient rpcClient) {
-        this.timeout = timeout;
-        this.rpcMethodInfo = rpcMethodInfo;
-        this.callback = callback;
-        this.channelInfo = channelInfo;
-        this.latch = new CountDownLatch(1);
-        this.startTime = System.currentTimeMillis();
-        this.rpcClient = rpcClient;
-    }
-
-    public void handleConnection(Response response) {
-        this.response = response;
-        this.endTime = System.currentTimeMillis();
-
-        // only long connection need to update channel group
-        if (rpcClient.isLongConnection()) {
-            if (response != null && response.getResult() != null) {
-                channelInfo.getChannelGroup().updateLatency((int) (endTime - startTime));
-                channelInfo.handleResponseSuccess();
-            } else {
-                channelInfo.getChannelGroup().updateLatencyWithReadTimeOut();
-                channelInfo.handleResponseFail();
-            }
+    if (isAsync()) {
+      if (response == null) {
+        callback.fail(new RpcException(RpcException.SERVICE_EXCEPTION, "internal error"));
+      } else if (response.getResult() != null) {
+        if (controller != null) {
+          callback.success(controller, (T) response.getResult());
         } else {
-            channelInfo.getChannelGroup().close();
+          callback.success((T) response.getResult());
         }
-
-        timeout.cancel();
-        latch.countDown();
-        isDone = true;
+      } else {
+        callback.fail(response.getException());
+      }
     }
+  }
 
-    public void handleResponse(Response response) {
-        handleConnection(response);
-        if (response != null) {
-            if (response.getBinaryAttachment() != null) {
-                if (controller == null) {
-                    LOG.error("controller can not be null when attachment exist");
-                    controller = new Controller();
-                }
-                controller.setResponseBinaryAttachment(response.getBinaryAttachment());
-            }
-            if (response.getKvAttachment() != null) {
-                if (controller == null) {
-                    LOG.error("controller can not be null when attachment exist");
-                    controller = new Controller();
-                }
-                controller.setResponseKvAttachment(response.getKvAttachment());
-            }
-        }
+  @Override
+  public boolean isAsync() {
+    return callback != null;
+  }
 
-        // invoke the chain of interceptors when async scene
-        if (isAsync() && CollectionUtils.isNotEmpty(rpcClient.getInterceptors())) {
-            int length = rpcClient.getInterceptors().size();
-            for (int i = length - 1; i >= 0; i--) {
-                rpcClient.getInterceptors().get(i).handleResponse(response);
-            }
-        }
+  @Override
+  public boolean cancel(boolean mayInterruptIfRunning) {
+    return false;
+  }
 
-        if (isAsync()) {
-            if (response == null) {
-                callback.fail(new RpcException(RpcException.SERVICE_EXCEPTION, "internal error"));
-            } else if (response.getResult() != null) {
-                if (controller != null) {
-                    callback.success(controller, (T) response.getResult());
-                } else {
-                    callback.success((T) response.getResult());
-                }
-            } else {
-                callback.fail(response.getException());
-            }
-        }
+  @Override
+  public boolean isCancelled() {
+    return false;
+  }
+
+  @Override
+  public boolean isDone() {
+    return isDone;
+  }
+
+  @Override
+  public T get() throws InterruptedException {
+    latch.await();
+    if (response == null) {
+      throw new RpcException(RpcException.TIMEOUT_EXCEPTION);
     }
-
-    @Override
-    public boolean isAsync() {
-        return callback != null;
+    if (response.getException() != null) {
+      throw new RpcException(response.getException());
     }
+    return (T) response.getResult();
+  }
 
-    @Override
-    public boolean cancel(boolean mayInterruptIfRunning) {
-        return false;
+  @Override
+  public T get(long timeout, TimeUnit unit) {
+    try {
+      boolean ret = latch.await(timeout, unit);
+      if (!ret || response == null) {
+        throw new RpcException(RpcException.TIMEOUT_EXCEPTION);
+      }
+      if (response.getException() != null) {
+        throw new RpcException(response.getException());
+      }
+      return (T) response.getResult();
+    } catch (InterruptedException e) {
+      throw new RpcException(RpcException.UNKNOWN_EXCEPTION);
     }
+  }
 
-    @Override
-    public boolean isCancelled() {
-        return false;
-    }
-
-    @Override
-    public boolean isDone() {
-        return isDone;
-    }
-
-    @Override
-    public T get() throws InterruptedException {
-        latch.await();
-        if (response == null) {
-            throw new RpcException(RpcException.TIMEOUT_EXCEPTION);
-        }
-        if (response.getException() != null) {
-            throw new RpcException(response.getException());
-        }
-        return (T) response.getResult();
-    }
-
-    @Override
-    public T get(long timeout, TimeUnit unit) {
-        try {
-            boolean ret = latch.await(timeout, unit);
-            if (!ret || response == null) {
-                throw new RpcException(RpcException.TIMEOUT_EXCEPTION);
-            }
-            if (response.getException() != null) {
-                throw new RpcException(response.getException());
-            }
-            return (T) response.getResult();
-        } catch (InterruptedException e) {
-            throw new RpcException(RpcException.UNKNOWN_EXCEPTION);
-        }
-    }
-
-    @Override
-    public String toString() {
-        return super.toString() + "@logId = " + logId;
-    }
+  @Override
+  public String toString() {
+    return super.toString() + "@logId = " + logId;
+  }
 }

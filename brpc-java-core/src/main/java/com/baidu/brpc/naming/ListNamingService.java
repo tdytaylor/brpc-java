@@ -17,55 +17,55 @@
 package com.baidu.brpc.naming;
 
 import com.baidu.brpc.client.instance.Endpoint;
-import org.apache.commons.lang3.Validate;
-
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.commons.lang3.Validate;
 
 /**
  * Fetch service list from List Naming Service
  */
 public class ListNamingService implements NamingService {
-    private List<Endpoint> endPoints;
 
-    public ListNamingService(BrpcURL namingUrl) {
-        Validate.notNull(namingUrl);
-        Validate.notEmpty(namingUrl.getHostPorts());
+  private List<Endpoint> endPoints;
 
-        String hostPorts = namingUrl.getHostPorts();
-        String[] hostPortSplits = hostPorts.split(",");
-        this.endPoints = new ArrayList<Endpoint>(hostPortSplits.length);
-        for (String hostPort : hostPortSplits) {
-            String[] hostPortSplit = hostPort.split(":");
-            String host = hostPortSplit[0];
-            int port;
-            if (hostPortSplit.length == 2) {
-                port = Integer.valueOf(hostPortSplit[1]);
-            } else {
-                port = 80;
-            }
-            endPoints.add(new Endpoint(host, port));
-        }
+  public ListNamingService(BrpcURL namingUrl) {
+    Validate.notNull(namingUrl);
+    Validate.notEmpty(namingUrl.getHostPorts());
+
+    String hostPorts = namingUrl.getHostPorts();
+    String[] hostPortSplits = hostPorts.split(",");
+    this.endPoints = new ArrayList<Endpoint>(hostPortSplits.length);
+    for (String hostPort : hostPortSplits) {
+      String[] hostPortSplit = hostPort.split(":");
+      String host = hostPortSplit[0];
+      int port;
+      if (hostPortSplit.length == 2) {
+        port = Integer.valueOf(hostPortSplit[1]);
+      } else {
+        port = 80;
+      }
+      endPoints.add(new Endpoint(host, port));
     }
+  }
 
-    @Override
-    public List<Endpoint> lookup(SubscribeInfo subscribeInfo) {
-        return endPoints;
-    }
+  @Override
+  public List<Endpoint> lookup(SubscribeInfo subscribeInfo) {
+    return endPoints;
+  }
 
-    @Override
-    public void subscribe(SubscribeInfo subscribeInfo, final NotifyListener listener) {
-    }
+  @Override
+  public void subscribe(SubscribeInfo subscribeInfo, final NotifyListener listener) {
+  }
 
-    @Override
-    public void unsubscribe(SubscribeInfo subscribeInfo) {
-    }
+  @Override
+  public void unsubscribe(SubscribeInfo subscribeInfo) {
+  }
 
-    @Override
-    public void register(RegisterInfo registerInfo) {
-    }
+  @Override
+  public void register(RegisterInfo registerInfo) {
+  }
 
-    @Override
-    public void unregister(RegisterInfo registerInfo) {
-    }
+  @Override
+  public void unregister(RegisterInfo registerInfo) {
+  }
 }

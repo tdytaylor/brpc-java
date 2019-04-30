@@ -26,6 +26,7 @@ import lombok.Setter;
 @Setter
 @Getter
 public class BaiduRpcDecodePacket {
-    private ByteBuf metaBuf;
-    private ByteBuf protoAndAttachmentBuf;
+
+  private ByteBuf metaBuf;
+  private ByteBuf protoAndAttachmentBuf;
 }

@@ -15,14 +15,13 @@
  */
 package com.baidu.brpc.spring.annotation;
 
+import com.baidu.brpc.spring.RpcServiceExporter;
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-
-import com.baidu.brpc.spring.RpcServiceExporter;
 
 /**
  * Annotation publish for {@link RpcServiceExporter}.
@@ -36,56 +35,53 @@ import com.baidu.brpc.spring.RpcServiceExporter;
 @Documented
 public @interface RpcExporter {
 
-    /**
-     * RPC server port to publish.
-     *
-     * @return the string
-     */
-    String port();
-    
-    /**
-     * bean name of RPC server options bean type must be {@link com.baidu.brpc.server.RpcServerOptions}.
-     *
-     * @return the string
-     */
-    String rpcServerOptionsBeanName() default "";
-    
-    /**
-     * bean name of RPC interceptor bean type must be {@link com.baidu.brpc.interceptor.Interceptor}.
-     *
-     * @return the string
-     */
-    String interceptorBeanName() default "";
+  /**
+   * RPC server port to publish.
+   *
+   * @return the string
+   */
+  String port();
 
-    /**
-     * bean name of {@link com.baidu.brpc.naming.NamingServiceFactory}.
-     *
-     * @return the string
-     */
-    String namingServiceFactoryBeanName() default "";
+  /**
+   * bean name of RPC server options bean type must be {@link com.baidu.brpc.server.RpcServerOptions}.
+   *
+   * @return the string
+   */
+  String rpcServerOptionsBeanName() default "";
 
-    /**
-     * group for naming service
-     *
-     */
-    String group() default "normal";
+  /**
+   * bean name of RPC interceptor bean type must be {@link com.baidu.brpc.interceptor.Interceptor}.
+   *
+   * @return the string
+   */
+  String interceptorBeanName() default "";
 
-    /**
-     * version for naming service
-     *
-     */
-    String version() default "1.0.0";
+  /**
+   * bean name of {@link com.baidu.brpc.naming.NamingServiceFactory}.
+   *
+   * @return the string
+   */
+  String namingServiceFactoryBeanName() default "";
 
-    /**
-     * ignore it when failed to register naming service
-     *
-     * @return true, ignore
-     */
-    boolean ignoreFailOfNamingService() default false;
+  /**
+   * group for naming service
+   */
+  String group() default "normal";
 
-    /**
-     * true: use the shared thread pool
-     * false: create individual thread pool for register service
-     */
-    boolean useSharedThreadPool() default true;
+  /**
+   * version for naming service
+   */
+  String version() default "1.0.0";
+
+  /**
+   * ignore it when failed to register naming service
+   *
+   * @return true, ignore
+   */
+  boolean ignoreFailOfNamingService() default false;
+
+  /**
+   * true: use the shared thread pool false: create individual thread pool for register service
+   */
+  boolean useSharedThreadPool() default true;
 }

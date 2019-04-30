@@ -15,38 +15,37 @@
  */
 package com.baidu.brpc.protocol;
 
-import java.util.Map;
-
 import com.baidu.brpc.RpcMethodInfo;
 import com.baidu.brpc.client.RpcFuture;
 import com.baidu.brpc.protocol.nshead.NSHead;
-
 import io.netty.buffer.ByteBuf;
+import java.util.Map;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
 public abstract class AbstractResponse implements Response {
-    private long logId;
-    private Object result;
-    private Throwable exception;
-    private RpcMethodInfo rpcMethodInfo;
-    private RpcFuture rpcFuture;
-    private Map<String, String> kvAttachment;
-    private ByteBuf binaryAttachment;
-    private int compressType;
-    private NSHead nsHead;
 
-    public void reset() {
-        logId = -1;
-        result = null;
-        exception = null;
-        rpcMethodInfo = null;
-        rpcFuture = null;
-        nsHead = null;
-        kvAttachment = null;
-        binaryAttachment = null;
-        compressType = 0;
-    }
+  private long logId;
+  private Object result;
+  private Throwable exception;
+  private RpcMethodInfo rpcMethodInfo;
+  private RpcFuture rpcFuture;
+  private Map<String, String> kvAttachment;
+  private ByteBuf binaryAttachment;
+  private int compressType;
+  private NSHead nsHead;
+
+  public void reset() {
+    logId = -1;
+    result = null;
+    exception = null;
+    rpcMethodInfo = null;
+    rpcFuture = null;
+    nsHead = null;
+    kvAttachment = null;
+    binaryAttachment = null;
+    compressType = 0;
+  }
 }

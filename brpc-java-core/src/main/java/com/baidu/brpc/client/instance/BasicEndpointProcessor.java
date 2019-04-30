@@ -19,7 +19,6 @@ package com.baidu.brpc.client.instance;
 import com.baidu.brpc.client.RpcClient;
 import com.baidu.brpc.client.channel.BrpcChannel;
 import com.baidu.brpc.client.channel.BrpcChannelFactory;
-
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -28,81 +27,82 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class BasicEndpointProcessor implements EndpointProcessor {
-    private CopyOnWriteArrayList<Endpoint> endPoints;
-    private CopyOnWriteArrayList<BrpcChannel> instances;
-    private ConcurrentMap<Endpoint, BrpcChannel> instanceChannelMap;
-    private RpcClient rpcClient;
 
-    public BasicEndpointProcessor(RpcClient rpcClient) {
-        this.endPoints = new CopyOnWriteArrayList<Endpoint>();
-        this.instances = new CopyOnWriteArrayList<BrpcChannel>();
-        this.instanceChannelMap = new ConcurrentHashMap<Endpoint, BrpcChannel>();
-        this.rpcClient = rpcClient;
+  private CopyOnWriteArrayList<Endpoint> endPoints;
+  private CopyOnWriteArrayList<BrpcChannel> instances;
+  private ConcurrentMap<Endpoint, BrpcChannel> instanceChannelMap;
+  private RpcClient rpcClient;
+
+  public BasicEndpointProcessor(RpcClient rpcClient) {
+    this.endPoints = new CopyOnWriteArrayList<Endpoint>();
+    this.instances = new CopyOnWriteArrayList<BrpcChannel>();
+    this.instanceChannelMap = new ConcurrentHashMap<Endpoint, BrpcChannel>();
+    this.rpcClient = rpcClient;
+  }
+
+  @Override
+  public void addEndPoints(Collection<Endpoint> addList) {
+    for (Endpoint endPoint : addList) {
+      if (!endPoints.contains(endPoint)) {
+        endPoints.add(endPoint);
+        BrpcChannel brpcChannel = BrpcChannelFactory.createChannel(
+            endPoint.getIp(), endPoint.getPort(), rpcClient);
+        instances.add(brpcChannel);
+        instanceChannelMap.putIfAbsent(endPoint, brpcChannel);
+      }
     }
+  }
 
-    @Override
-    public void addEndPoints(Collection<Endpoint> addList) {
-        for (Endpoint endPoint : addList) {
-            if (!endPoints.contains(endPoint)) {
-                endPoints.add(endPoint);
-                BrpcChannel brpcChannel = BrpcChannelFactory.createChannel(
-                        endPoint.getIp(), endPoint.getPort(), rpcClient);
-                instances.add(brpcChannel);
-                instanceChannelMap.putIfAbsent(endPoint, brpcChannel);
-            }
+  @Override
+  public void deleteEndPoints(Collection<Endpoint> deleteList) {
+    for (Endpoint endPoint : deleteList) {
+      if (endPoints.contains(endPoint)) {
+        endPoints.remove(endPoint);
+        // remove instance
+        Iterator<BrpcChannel> iterator = instances.iterator();
+        while (iterator.hasNext()) {
+          BrpcChannel brpcChannel = iterator.next();
+          if (brpcChannel.getIp().equals(endPoint.getIp())
+              && brpcChannel.getPort() == endPoint.getPort()) {
+            brpcChannel.close();
+            instances.remove(brpcChannel);
+            break;
+          }
         }
+        instanceChannelMap.remove(endPoint);
+      }
     }
+  }
 
-    @Override
-    public void deleteEndPoints(Collection<Endpoint> deleteList) {
-        for (Endpoint endPoint : deleteList) {
-            if (endPoints.contains(endPoint)) {
-                endPoints.remove(endPoint);
-                // remove instance
-                Iterator<BrpcChannel> iterator = instances.iterator();
-                while (iterator.hasNext()) {
-                    BrpcChannel brpcChannel = iterator.next();
-                    if (brpcChannel.getIp().equals(endPoint.getIp())
-                            && brpcChannel.getPort() == endPoint.getPort()) {
-                        brpcChannel.close();
-                        instances.remove(brpcChannel);
-                        break;
-                    }
-                }
-                instanceChannelMap.remove(endPoint);
-            }
-        }
+  @Override
+  public CopyOnWriteArrayList<BrpcChannel> getHealthyInstances() {
+    return instances;
+  }
+
+  @Override
+  public CopyOnWriteArrayList<BrpcChannel> getUnHealthyInstances() {
+    return null;
+  }
+
+  @Override
+  public ConcurrentMap<Endpoint, BrpcChannel> getInstanceChannelMap() {
+    return instanceChannelMap;
+  }
+
+  @Override
+  public CopyOnWriteArrayList<Endpoint> getEndPoints() {
+    return endPoints;
+  }
+
+  @Override
+  public void updateUnHealthyInstances(List<BrpcChannel> channelGroups) {
+
+  }
+
+  @Override
+  public void stop() {
+    for (BrpcChannel channelGroup : instances) {
+      channelGroup.close();
     }
-
-    @Override
-    public CopyOnWriteArrayList<BrpcChannel> getHealthyInstances() {
-        return instances;
-    }
-
-    @Override
-    public CopyOnWriteArrayList<BrpcChannel> getUnHealthyInstances() {
-        return null;
-    }
-
-    @Override
-    public ConcurrentMap<Endpoint, BrpcChannel> getInstanceChannelMap() {
-        return instanceChannelMap;
-    }
-
-    @Override
-    public CopyOnWriteArrayList<Endpoint> getEndPoints() {
-        return endPoints;
-    }
-
-    @Override
-    public void updateUnHealthyInstances(List<BrpcChannel> channelGroups) {
-
-    }
-
-    @Override
-    public void stop() {
-        for (BrpcChannel channelGroup : instances) {
-            channelGroup.close();
-        }
-    }
+  }
 }

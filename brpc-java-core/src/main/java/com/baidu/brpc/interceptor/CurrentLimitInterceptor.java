@@ -20,23 +20,23 @@ import com.baidu.brpc.protocol.Request;
 import com.baidu.brpc.server.currentlimit.CurrentLimiter;
 
 /**
- * Rpc server current limit interceptor
- * Specific current limiting algorithm leaves to the {@link CurrentLimiter}
+ * Rpc server current limit interceptor Specific current limiting algorithm leaves to the {@link
+ * CurrentLimiter}
  *
  * @author wangjiayin@baidu.com
  * @since 2018/11/26
  */
 public class CurrentLimitInterceptor extends AbstractInterceptor {
 
-    private CurrentLimiter limiter;
+  private CurrentLimiter limiter;
 
-    public CurrentLimitInterceptor(CurrentLimiter limiter) {
-        this.limiter = limiter;
-    }
+  public CurrentLimitInterceptor(CurrentLimiter limiter) {
+    this.limiter = limiter;
+  }
 
-    @Override
-    public boolean handleRequest(Request request) {
-        return limiter.isAllowable(request);
-    }
+  @Override
+  public boolean handleRequest(Request request) {
+    return limiter.isAllowable(request);
+  }
 
 }

@@ -17,9 +17,9 @@
 package com.baidu.brpc.protocol.jprotobuf;
 
 import com.baidu.brpc.client.RpcCallback;
-
 import java.util.concurrent.Future;
 
 public interface EchoServiceAsync extends EchoService {
-    Future<EchoResponse> echo(EchoRequest request, RpcCallback<EchoResponse> callback);
+
+  Future<EchoResponse> echo(EchoRequest request, RpcCallback<EchoResponse> callback);
 }
